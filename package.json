@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "node .output/server/index.js"
+    "start": "next start"
 
   },
   "dependencies": {
