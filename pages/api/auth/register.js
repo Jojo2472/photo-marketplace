@@ -1,4 +1,4 @@
-import db from "@/config/db";
+import db from "../../../config/db";
 import bcrypt from "bcryptjs";
 
 export default async function handler(req, res) {
