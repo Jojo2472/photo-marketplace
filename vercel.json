@@ -1,0 +1,7 @@
+{
+  "build": {
+    "env": {
+      "PNPM_SKIP_PROMPT": "1"
+    }
+  }
+}
