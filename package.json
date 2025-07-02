@@ -4,7 +4,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "node .output/server/index.js"
+
   },
   "dependencies": {
     "@prisma/client": "6.11.0",
