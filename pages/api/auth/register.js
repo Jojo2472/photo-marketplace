@@ -1,4 +1,4 @@
-import db from "@/lib/db"; // Your PostgreSQL wrapper
+import db from "@/config/db";
 import bcrypt from "bcryptjs";
 
 export default async function handler(req, res) {
