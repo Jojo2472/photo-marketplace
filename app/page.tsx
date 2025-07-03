@@ -1,9 +1,10 @@
-// app/page.tsx — remove "use client"
+// app/page.tsx
+
 export default function Home() {
   return (
-    <div>
+    <main>
       <h1>Hello from Photo Marketplace!</h1>
-    </div>
+    </main>
   );
 }
 
