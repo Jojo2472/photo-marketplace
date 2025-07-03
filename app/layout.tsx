@@ -1,17 +1,21 @@
 // app/layout.tsx
-export const metadata = {
-  title: 'Photo Marketplace',
-  description: 'Buy and sell beautiful foot photos anonymously',
-}
-
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {(() => {
+          try {
+            return children;
+          } catch (err) {
+            console.error('❌ SSR Error:', err);
+            return <div>Something went wrong on the server.</div>;
+          }
+        })()}
+      </body>
     </html>
-  )
+  );
 }
