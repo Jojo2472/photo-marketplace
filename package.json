@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "npx prisma generate && next build",
-    "start": "node .next/standalone/server.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "@prisma/client": "6.11.0",
