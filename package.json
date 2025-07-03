@@ -2,10 +2,10 @@
   "name": "photo-marketplace-complete",
   "version": "1.0.0",
   "scripts": {
-    "dev": "next dev",
-    "build": "npx prisma generate && pnpm build",
-    "start": "node .next/standalone/server.js"
-  },
+  "dev": "next dev",
+  "build": "prisma generate && next build",
+  "start": "node .next/standalone/server.js"
+}
   "dependencies": {
     "@prisma/client": "6.11.0",
     "bcryptjs": "^3.0.2",
