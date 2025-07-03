@@ -1,11 +1,11 @@
 // app/page.tsx
 'use client';
 
-import Link from 'next/link';
-
 export default async function Home() {
   try {
-    // your existing logic or fetch
+    // TEMP: Fake crash to force logging, remove after test
+    // throw new Error("Testing SSR crash");
+
     return (
       <div>
         <h1>Hello from Photo Marketplace!</h1>
@@ -13,6 +13,6 @@ export default async function Home() {
     );
   } catch (err) {
     console.error('SSR homepage error:', err);
-    return <div>Something went wrong</div>;
+    return <div>Something went wrong on homepage</div>;
   }
 }
