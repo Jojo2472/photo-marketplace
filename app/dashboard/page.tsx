@@ -1,21 +1,26 @@
-// app/dashboard/page.tsx
-import { getTokenData } from '@/lib/jwt';
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+'use client';
 
-export default async function DashboardPage() {
-  const cookieStore = cookies();
-  const token = cookieStore.get('token')?.value;
+import { useEffect, useState } from 'react';
+import jwt from 'jsonwebtoken';
 
-  if (!token) {
-    return redirect('/login');
-  }
+export default function DashboardPage() {
+  const [user, setUser] = useState<{ email?: string; id?: string } | null>(null);
 
-  const user = getTokenData(token); // this should decode and verify the token
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
 
-  if (!user) {
-    return redirect('/login');
-  }
+    try {
+      const decoded = jwt.decode(token);
+      if (decoded && typeof decoded === 'object' && 'email' in decoded && 'userId' in decoded) {
+        setUser({ email: decoded.email as string, id: decoded.userId as string });
+      }
+    } catch (err) {
+      console.error('Failed to decode token', err);
+    }
+  }, []);
+
+  if (!user) return <p>Loading...</p>;
 
   return (
     <div>
