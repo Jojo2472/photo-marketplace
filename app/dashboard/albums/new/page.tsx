@@ -4,11 +4,27 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
+// ✅ Define the album type explicitly
+type Album = {
+  id: string;
+  title: string;
+};
+
 export default function NewAlbumPage() {
-  const [albums, setAlbums] = useState([]);
+  const [albums, setAlbums] = useState<Album[]>([]);
 
   useEffect(() => {
-    // TODO: Fetch albums here if needed
+    const fetchAlbums = async () => {
+      try {
+        const res = await fetch('/api/albums');
+        const data = await res.json();
+        setAlbums(data as Album[]);
+      } catch (err) {
+        console.error('Failed to fetch albums:', err);
+      }
+    };
+
+    fetchAlbums();
   }, []);
 
   return (
@@ -23,21 +39,15 @@ export default function NewAlbumPage() {
         </Link>
       </div>
 
-      {/* Album list - placeholder for now */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {albums.length === 0 ? (
-          <p className="text-gray-500">You haven't created any albums yet.</p>
-        ) : (
-          albums.map((album) => (
-            <div
-              key={album.id}
-              className="border p-4 rounded shadow hover:shadow-md transition"
-            >
-              <h3 className="font-semibold text-lg">{album.title}</h3>
-              <p className="text-sm text-gray-600">{album.description}</p>
-            </div>
-          ))
-        )}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {albums.map((album) => (
+          <div
+            key={album.id}
+            className="border p-4 rounded shadow hover:shadow-md transition"
+          >
+            <h3 className="font-semibold text-lg">{album.title}</h3>
+          </div>
+        ))}
       </div>
     </div>
   );
