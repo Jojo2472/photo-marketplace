@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Optional: Send your own custom verification email too
-    await sendVerificationEmail(email);
+    await sendVerificationEmail(email, `${process.env.NEXT_PUBLIC_SITE_URL}/verify-email`);
 
     return new Response(JSON.stringify({ message: 'Check your email to verify your account.' }), { status: 201 });
   } catch (err) {
