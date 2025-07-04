@@ -6,65 +6,100 @@ import { useRouter } from 'next/navigation';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ email: '', password: '', name: '' });
+  const [form, setForm] = useState({
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    role: 'BUYER', // ✅ Must match Supabase enum exactly
+  });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
 
+    if (form.password !== form.confirmPassword) {
+      setError("Passwords don't match");
+      return;
+    }
+
+    setLoading(true);
     const res = await fetch('/api/register', {
       method: 'POST',
       body: JSON.stringify(form),
-      headers: { 'Content-Type': 'application/json' },
     });
 
     const data = await res.json();
+    setLoading(false);
 
     if (!res.ok) {
-      setError(data.error || 'Something went wrong');
+      setError(data.message || 'Something went wrong');
     } else {
-      router.push('/login');
+      router.push('/verify-email'); // ✅ Redirect to email verification page
     }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-20">
-      <h1 className="text-2xl font-bold mb-6">Register</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <main className="max-w-md mx-auto mt-10 p-6 bg-white rounded-xl shadow">
+      <h1 className="text-2xl font-bold mb-4">Create an account</h1>
+      <form onSubmit={handleRegister} className="space-y-4">
         <input
-          name="name"
-          placeholder="Name (optional)"
-          value={form.name}
-          onChange={handleChange}
+          name="username"
+          type="text"
+          placeholder="Username"
           className="w-full p-2 border rounded"
+          required
+          onChange={handleChange}
         />
         <input
           name="email"
           type="email"
           placeholder="Email"
-          value={form.email}
-          onChange={handleChange}
           className="w-full p-2 border rounded"
           required
+          onChange={handleChange}
         />
         <input
           name="password"
           type="password"
           placeholder="Password"
-          value={form.password}
-          onChange={handleChange}
           className="w-full p-2 border rounded"
           required
+          onChange={handleChange}
         />
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-        <button type="submit" className="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700">
-          Sign Up
+        <input
+          name="confirmPassword"
+          type="password"
+          placeholder="Confirm Password"
+          className="w-full p-2 border rounded"
+          required
+          onChange={handleChange}
+        />
+        <select
+          name="role"
+          className="w-full p-2 border rounded"
+          required
+          onChange={handleChange}
+          value={form.role}
+        >
+          <option value="BUYER">Buyer</option>
+          <option value="SELLER">Seller</option>
+        </select>
+        {error && <p className="text-red-600">{error}</p>}
+        <button
+          type="submit"
+          className="w-full bg-purple-700 text-white p-2 rounded hover:bg-purple-800"
+          disabled={loading}
+        >
+          {loading ? 'Registering...' : 'Register'}
         </button>
       </form>
-    </div>
+    </main>
   );
 }
