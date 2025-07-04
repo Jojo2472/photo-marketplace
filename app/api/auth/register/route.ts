@@ -1,38 +1,38 @@
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+// app/api/auth/register/route.ts
+import { createClient } from '@/utils/supabase/server';
+import { sendVerificationEmail } from '@/lib/sendVerificationEmail';
+import { NextRequest } from 'next/server';
 
-const existing = await prisma.user.findUnique({ where: { email } });
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
-
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { email, password, role } = await req.json();
+    const supabase = createClient();
+    const { email, password, username, role } = await req.json();
 
-    if (!email || !password) {
+    if (!email || !password || !username || !role) {
       return new Response(JSON.stringify({ error: 'Missing fields' }), { status: 400 });
     }
 
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) {
-      return new Response(JSON.stringify({ error: 'User already exists' }), { status: 409 });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        role: role === 'SELLER' ? 'SELLER' : 'BUYER',
+    // Create Supabase user
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { username, role }, // this goes into `auth.users.user_metadata`
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/verify-email`,
       },
     });
 
-    const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    if (error) {
+      console.error('Supabase signUp error:', error.message);
+      return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    }
 
-    return new Response(JSON.stringify({ token }), { status: 201 });
+    // Optional: Send your own custom verification email too
+    await sendVerificationEmail(email);
+
+    return new Response(JSON.stringify({ message: 'Check your email to verify your account.' }), { status: 201 });
   } catch (err) {
-    console.error(err);
+    console.error('Unexpected error:', err);
     return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
   }
 }
-
