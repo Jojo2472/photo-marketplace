@@ -1,79 +1,58 @@
 // app/dashboard/page.tsx
 
-'use client';
+import Link from "next/link";
+import { createServerClient } from "@/utils/supabase/server";
+import { redirect } from "next/navigation";
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { createClient } from '@/utils/supabase/client';
-import { Database } from '@/types/supabase';
-import { useRouter } from 'next/navigation';
+export default async function DashboardPage() {
+  const supabase = createServerClient();
 
-type Album = Database['public']['Tables']['albums']['Row'];
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-export default function DashboardPage() {
-  const [albums, setAlbums] = useState<Album[]>([]);
-  const supabase = createClient();
-  const router = useRouter();
+  if (!session) {
+    return redirect("/login");
+  }
 
-  useEffect(() => {
-    const fetchAlbums = async () => {
-      const { data, error } = await supabase
-        .from('albums')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (!error && data) {
-        setAlbums(data);
-      }
-    };
-
-    fetchAlbums();
-  }, []);
-
-  const handleDeleteAlbum = async (id: string) => {
-    const confirmed = confirm('Are you sure you want to delete this album?');
-    if (!confirmed) return;
-
-    const res = await fetch(`/api/albums/${id}`, {
-      method: 'DELETE',
-    });
-
-    if (res.ok) {
-      setAlbums((prev) => prev.filter((album) => album.id !== id));
-    } else {
-      const err = await res.json();
-      alert(err.message || 'Failed to delete album.');
-    }
-  };
+  const { data: albums } = await supabase
+    .from("albums")
+    .select("*")
+    .eq("user_id", session.user.id);
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Your Albums</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {albums.map((album) => (
-          <div
-            key={album.id}
-            className="border rounded-xl p-4 shadow hover:shadow-lg transition"
-          >
-            <h2 className="font-semibold text-lg">{album.title}</h2>
-            <p className="text-sm text-gray-500">{album.description}</p>
-            <div className="mt-4 flex justify-between">
-              <Link
-                href={`/dashboard/albums/${album.id}`}
-                className="text-purple-600 font-medium hover:underline"
-              >
-                View
-              </Link>
-              <button
-                onClick={() => handleDeleteAlbum(album.id)}
-                className="text-red-500 font-medium hover:underline"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        ))}
+    <div className="max-w-4xl mx-auto mt-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Your Albums</h1>
+        <Link
+          href="/dashboard/albums/new"
+          className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+        >
+          New Album
+        </Link>
       </div>
+
+      {albums?.length ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {albums.map((album) => (
+            <Link
+              key={album.id}
+              href={`/dashboard/albums/${album.id}`}
+              className="border rounded-xl p-4 shadow hover:shadow-lg transition"
+            >
+              <h2 className="font-semibold text-lg">{album.name}</h2>
+              <p className="text-sm text-gray-500">{album.description}</p>
+              <div className="mt-4 flex justify-between">
+                <span className="text-xs text-gray-400">
+                  Created: {new Date(album.created_at).toLocaleDateString()}
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <p className="text-gray-500">No albums yet. Create one to get started.</p>
+      )}
     </div>
   );
 }
