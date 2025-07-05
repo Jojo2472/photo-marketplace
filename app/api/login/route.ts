@@ -1,26 +1,23 @@
 // app/api/login/route.ts
-import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const cookieStore = cookies();
-  const supabase = createRouteHandlerClient({ cookies: cookieStore });
+
+  // ✅ Pass the cookies *function* directly (not the result of calling it)
+  const supabase = createRouteHandlerClient({ cookies });
 
   const { data, error } = await supabase.auth.signInWithPassword({
     email: body.email,
     password: body.password,
   });
 
-  if (error || !data.session) {
-    return NextResponse.json(
-      { error: error?.message || 'Invalid credentials' },
-      { status: 401 }
-    );
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 401 });
   }
 
-  // This response will automatically set the Supabase session cookie
-  return NextResponse.json({ message: 'Logged in!' });
+  return NextResponse.json({ data });
 }
-
