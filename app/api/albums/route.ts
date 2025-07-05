@@ -1,66 +1,35 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+// app/api/albums/[id]/route.ts
+
+import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { Database } from '@/types/supabase';
 
-export async function GET(req: NextRequest) {
-  const supabase = createServerComponentClient({ cookies });
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  const cookieStore = cookies();
+  const supabase = createRouteHandlerClient<Database>({ cookies: () => cookieStore });
 
   const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!session) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data: albums, error } = await supabase
+  const { error } = await supabase
     .from('albums')
-    .select('id, title, description, cover_image_url, created_at')
-    .eq('seller_id', user.id)
-    .order('created_at', { ascending: false });
+    .delete()
+    .eq('id', params.id)
+    .eq('user_id', session.user.id);
 
   if (error) {
-    console.error('Failed to fetch albums:', error.message);
-    return NextResponse.json({ error: 'Failed to fetch albums' }, { status: 500 });
+    return NextResponse.json({ message: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ albums });
+  return NextResponse.json({ message: 'Album deleted' });
 }
 
-export async function POST(req: NextRequest) {
-  const supabase = createServerComponentClient({ cookies });
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const body = await req.json();
-  const { title, description, cover_image_url } = body;
-
-  if (!title) {
-    return NextResponse.json({ error: 'Title is required' }, { status: 400 });
-  }
-
-  const { error } = await supabase.from('albums').insert([
-    {
-      title,
-      description,
-      cover_image_url,
-      seller_id: user.id,
-      created_at: new Date().toISOString(),
-    },
-  ]);
-
-  if (error) {
-    console.error('Failed to create album:', error.message);
-    return NextResponse.json({ error: 'Failed to create album' }, { status: 500 });
-  }
-
-  return NextResponse.json({ success: true });
-}
