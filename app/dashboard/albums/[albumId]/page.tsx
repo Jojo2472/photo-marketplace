@@ -5,7 +5,7 @@ import { createServerClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
 
 export default async function AlbumDetailPage({ params }: { params: { albumId: string } }) {
-  const supabase = createServerClient(cookies());
+  const supabase = createServerClient();
 
   const {
     data: { session },
