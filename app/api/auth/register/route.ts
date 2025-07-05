@@ -1,5 +1,5 @@
 // app/api/auth/register/route.ts
-import { createClient } from '@/utils/supabase/server';
+import { createClient } from '@/utils/supabase/client';
 import { sendVerificationEmail } from '@/lib/sendVerificationEmail';
 import { NextRequest } from 'next/server';
 
