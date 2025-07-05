@@ -1,5 +1,7 @@
 // app/dashboard/page.tsx
 
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { createServerClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
