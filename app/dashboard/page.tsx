@@ -1,73 +1,79 @@
 // app/dashboard/page.tsx
 
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/utils/supabase/client'
-import CreateAlbumButton from './CreateAlbumButton'
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { createClient } from '@/utils/supabase/client';
+import { Database } from '@/types/supabase';
+import { useRouter } from 'next/navigation';
 
-type Album = {
-  id: string
-  name: string
-  user_id: string
-}
+type Album = Database['public']['Tables']['albums']['Row'];
 
-export default function Dashboard() {
-  const [albums, setAlbums] = useState<Album[]>([])
-  const [loading, setLoading] = useState(true)
-  const router = useRouter()
+export default function DashboardPage() {
+  const [albums, setAlbums] = useState<Album[]>([]);
+  const supabase = createClient();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchAlbums = async () => {
-      const supabase = createClient()
       const { data, error } = await supabase
         .from('albums')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching albums:', error)
-      } else {
-        setAlbums(data || [])
+      if (!error && data) {
+        setAlbums(data);
       }
+    };
 
-      setLoading(false)
+    fetchAlbums();
+  }, []);
+
+  const handleDeleteAlbum = async (id: string) => {
+    const confirmed = confirm('Are you sure you want to delete this album?');
+    if (!confirmed) return;
+
+    const res = await fetch(`/api/albums/${id}`, {
+      method: 'DELETE',
+    });
+
+    if (res.ok) {
+      setAlbums((prev) => prev.filter((album) => album.id !== id));
+    } else {
+      const err = await res.json();
+      alert(err.message || 'Failed to delete album.');
     }
-
-    fetchAlbums()
-  }, [])
-
-  if (loading) {
-    return <p>Loading...</p>
-  }
+  };
 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Your Albums</h1>
-
-      {/* ✅ Render the album creation button */}
-      <CreateAlbumButton />
-
-      {albums.length === 0 ? (
-        <p className="mt-4">No albums found. Click above to create one.</p>
-      ) : (
-        <ul className="mt-4 space-y-2">
-          {albums.map((album) => (
-            <li key={album.id}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        {albums.map((album) => (
+          <div
+            key={album.id}
+            className="border rounded-xl p-4 shadow hover:shadow-lg transition"
+          >
+            <h2 className="font-semibold text-lg">{album.title}</h2>
+            <p className="text-sm text-gray-500">{album.description}</p>
+            <div className="mt-4 flex justify-between">
               <Link
                 href={`/dashboard/albums/${album.id}`}
-                className="text-purple-600 underline"
+                className="text-purple-600 font-medium hover:underline"
               >
-                {album.name}
+                View
               </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+              <button
+                onClick={() => handleDeleteAlbum(album.id)}
+                className="text-red-500 font-medium hover:underline"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
-  )
+  );
 }
-
-

@@ -1,56 +1,35 @@
-//app/dashboard/albums/[albumId]/page.tsx
+// app/dashboard/albums/[albumId]/page.tsx
 
-'use client';
+import { cookies } from 'next/headers';
+import { createServerClient } from '@/utils/supabase/server';
+import { redirect } from 'next/navigation';
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { createClient } from '@/utils/supabase/client';
-import { Database } from '@/types/supabase';
+export default async function AlbumDetailPage({ params }: { params: { albumId: string } }) {
+  const supabase = createServerClient(cookies());
 
-type Album = Database['public']['Tables']['albums']['Row'];
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-export default function AlbumDetailPage() {
-  const { albumId } = useParams();
-  const router = useRouter();
-  const supabase = createClient();
+  if (!session) {
+    redirect('/login');
+  }
 
-  const [album, setAlbum] = useState<Album | null>(null);
+  const { data: album, error } = await supabase
+    .from('albums')
+    .select('*')
+    .eq('id', params.albumId)
+    .single();
 
-  useEffect(() => {
-    const loadAlbum = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const session = sessionData?.session;
-
-      if (!session) {
-        router.push('/login');
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('albums')
-        .select('*')
-        .eq('id', albumId as string)
-        .single();
-
-      if (error) {
-        console.error('Error loading album:', error.message);
-      } else {
-        setAlbum(data);
-      }
-    };
-
-    loadAlbum();
-  }, [albumId, supabase, router]);
-
-  if (!album) {
-    return <p className="p-6">Loading album...</p>;
+  if (error || !album) {
+    return <div className="p-6 text-red-500">Album not found</div>;
   }
 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold">{album.name}</h1>
       <p className="text-gray-600 mt-2">{album.description}</p>
-      {/* You can expand this to show uploaded photos later */}
     </div>
   );
 }
+
