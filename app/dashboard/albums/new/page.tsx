@@ -1,33 +1,98 @@
+//app/dashboard/albums/new/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { createClient } from '@/utils/supabase/client';
 
-const JWT_SECRET = process.env.NEXT_PUBLIC_JWT_SECRET || 'supersecret';
+export default function NewAlbumPage() {
+  const router = useRouter();
+  const supabase = createClient();
 
-export default function DashboardPage() {
-  const [user, setUser] = useState<JwtPayload | null>(null);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-        setUser(decoded);
-      } catch (error) {
-        console.error('Invalid token', error);
-      }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg('');
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      setErrorMsg('You must be logged in to create an album.');
+      setLoading(false);
+      return;
     }
-  }, []);
 
-  if (!user) {
-    return <p>Loading...</p>;
-  }
+    const { data, error } = await supabase
+      .from('albums')
+      .insert([
+        {
+          title,
+          description,
+          user_id: user.id,
+          created_at: new Date().toISOString(),
+        },
+      ])
+      .select()
+      .single();
+
+    if (error || !data) {
+      setErrorMsg('Failed to create album.');
+      setLoading(false);
+      return;
+    }
+
+    // ✅ This is where we redirect after successful album creation
+    router.push(`/dashboard/albums/${data.id}?upload=1`);
+  };
 
   return (
-    <div>
-      <h1>Welcome back, {user.email}!</h1>
-      <p>Your user ID is: {user.userId}</p>
+    <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-md">
+      <h1 className="text-2xl font-bold mb-4">Create a New Album</h1>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Album Title</label>
+          <input
+            type="text"
+            required
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full border border-gray-300 rounded p-2"
+            placeholder="e.g., Poolside Glamour"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Album Description</label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={4}
+            className="w-full border border-gray-300 rounded p-2"
+            placeholder="Add details or themes about this album (optional)"
+          />
+        </div>
+
+        {errorMsg && <p className="text-red-500 text-sm">{errorMsg}</p>}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-purple-700 text-white py-2 rounded hover:bg-purple-800 transition"
+        >
+          {loading ? 'Creating...' : 'Create Album'}
+        </button>
+      </form>
     </div>
   );
 }
+
+

@@ -1,4 +1,6 @@
 // app/layout.tsx
+import './globals.css';
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   try {
     return (

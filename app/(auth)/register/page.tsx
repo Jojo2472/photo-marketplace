@@ -1,105 +1,130 @@
 // app/(auth)/register/page.tsx
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function RegisterPage() {
+  const supabase = createClientComponentClient();
   const router = useRouter();
-  const [form, setForm] = useState({
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    role: 'BUYER', // ✅ Must match Supabase enum exactly
-  });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [username, setUsername] = useState("");
+  const [role, setRole] = useState<"buyer" | "seller">("buyer");
+
+  const [loading, setLoading] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState<
+    "weak" | "good" | "strong" | ""
+  >("");
+
+  const getStrength = (pwd: string) => {
+    if (pwd.length < 6) return "weak";
+    if (/[A-Z]/.test(pwd) && /\d/.test(pwd) && pwd.length >= 8) return "strong";
+    return "good";
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  const handlePasswordChange = (pwd: string) => {
+    setPassword(pwd);
+    setPasswordStrength(getStrength(pwd));
+  };
 
-    if (form.password !== form.confirmPassword) {
-      setError("Passwords don't match");
+  const handleRegister = async () => {
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
       return;
     }
 
     setLoading(true);
-    const res = await fetch('/api/register', {
-      method: 'POST',
-      body: JSON.stringify(form),
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { username, role },
+        emailRedirectTo: `${location.origin}/verify`,
+      },
     });
 
-    const data = await res.json();
     setLoading(false);
 
-    if (!res.ok) {
-      setError(data.message || 'Something went wrong');
+    if (error) {
+      toast.error(error.message);
     } else {
-      router.push('/verify-email'); // ✅ Redirect to email verification page
+      toast.success("Check your email to verify your account");
     }
   };
 
   return (
-    <main className="max-w-md mx-auto mt-10 p-6 bg-white rounded-xl shadow">
-      <h1 className="text-2xl font-bold mb-4">Create an account</h1>
-      <form onSubmit={handleRegister} className="space-y-4">
+    <div className="min-h-screen bg-purple-100 flex items-center justify-center px-4">
+      <Toaster />
+      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-sm">
+        <h2 className="text-center text-lg font-bold text-purple-800 mb-4">
+          Create an Account
+        </h2>
+
         <input
-          name="username"
-          type="text"
-          placeholder="Username"
-          className="w-full p-2 border rounded"
-          required
-          onChange={handleChange}
-        />
-        <input
-          name="email"
           type="email"
           placeholder="Email"
-          className="w-full p-2 border rounded"
-          required
-          onChange={handleChange}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full mb-3 px-4 py-2 border rounded focus:outline-none"
         />
+
         <input
-          name="password"
           type="password"
           placeholder="Password"
-          className="w-full p-2 border rounded"
-          required
-          onChange={handleChange}
+          value={password}
+          onChange={(e) => handlePasswordChange(e.target.value)}
+          className="w-full mb-3 px-4 py-2 border rounded focus:outline-none"
         />
+
         <input
-          name="confirmPassword"
           type="password"
           placeholder="Confirm Password"
-          className="w-full p-2 border rounded"
-          required
-          onChange={handleChange}
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          className="w-full mb-3 px-4 py-2 border rounded focus:outline-none"
         />
-        <select
-          name="role"
-          className="w-full p-2 border rounded"
-          required
-          onChange={handleChange}
-          value={form.role}
-        >
-          <option value="BUYER">Buyer</option>
-          <option value="SELLER">Seller</option>
-        </select>
-        {error && <p className="text-red-600">{error}</p>}
+
+        <input
+          type="text"
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          className="w-full mb-3 px-4 py-2 border rounded focus:outline-none"
+        />
+
+        <div className="flex justify-between mb-4">
+          <button
+            onClick={() => setRole("buyer")}
+            className={`w-full mr-1 px-4 py-2 rounded font-medium text-white ${
+              role === "buyer" ? "bg-purple-700" : "bg-purple-500"
+            }`}
+          >
+            👤 Buyer
+          </button>
+          <button
+            onClick={() => setRole("seller")}
+            className={`w-full ml-1 px-4 py-2 rounded font-medium text-white ${
+              role === "seller" ? "bg-purple-700" : "bg-purple-500"
+            }`}
+          >
+            📦 Seller
+          </button>
+        </div>
+
         <button
-          type="submit"
-          className="w-full bg-purple-700 text-white p-2 rounded hover:bg-purple-800"
+          onClick={handleRegister}
           disabled={loading}
+          className="w-full bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded font-semibold transition"
         >
-          {loading ? 'Registering...' : 'Register'}
+          {loading ? "Registering..." : "Register"}
         </button>
-      </form>
-    </main>
+      </div>
+    </div>
   );
 }

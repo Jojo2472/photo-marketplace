@@ -1,31 +1,73 @@
-'use client';
+// app/dashboard/page.tsx
 
-import { useEffect, useState } from 'react';
-import jwt from 'jsonwebtoken';
+'use client'
 
-export default function DashboardPage() {
-  const [user, setUser] = useState<{ email?: string; id?: string } | null>(null);
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/utils/supabase/client'
+import CreateAlbumButton from './CreateAlbumButton'
+
+type Album = {
+  id: string
+  name: string
+  user_id: string
+}
+
+export default function Dashboard() {
+  const [albums, setAlbums] = useState<Album[]>([])
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
+    const fetchAlbums = async () => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('albums')
+        .select('*')
+        .order('created_at', { ascending: false })
 
-    try {
-      const decoded = jwt.decode(token);
-      if (decoded && typeof decoded === 'object' && 'email' in decoded && 'userId' in decoded) {
-        setUser({ email: decoded.email as string, id: decoded.userId as string });
+      if (error) {
+        console.error('Error fetching albums:', error)
+      } else {
+        setAlbums(data || [])
       }
-    } catch (err) {
-      console.error('Failed to decode token', err);
-    }
-  }, []);
 
-  if (!user) return <p>Loading...</p>;
+      setLoading(false)
+    }
+
+    fetchAlbums()
+  }, [])
+
+  if (loading) {
+    return <p>Loading...</p>
+  }
 
   return (
-    <div>
-      <h1>Welcome back, {user.email}!</h1>
-      <p>Your user ID is: {user.id}</p>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Your Albums</h1>
+
+      {/* ✅ Render the album creation button */}
+      <CreateAlbumButton />
+
+      {albums.length === 0 ? (
+        <p className="mt-4">No albums found. Click above to create one.</p>
+      ) : (
+        <ul className="mt-4 space-y-2">
+          {albums.map((album) => (
+            <li key={album.id}>
+              <Link
+                href={`/dashboard/albums/${album.id}`}
+                className="text-purple-600 underline"
+              >
+                {album.name}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
-  );
+  )
 }
+
+

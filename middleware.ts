@@ -1,18 +1,46 @@
 // middleware.ts
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 
-export function middleware(request: NextRequest) {
-  const response = NextResponse.next()
+export async function middleware(req: NextRequest) {
+  const res = NextResponse.next();
+  const supabase = createMiddlewareClient({ req, res });
+  const { data: session } = await supabase.auth.getSession();
 
-  response.headers.set('Access-Control-Allow-Origin', '*')
-  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  const pathname = req.nextUrl.pathname;
 
-  return response
+  // Unprotected routes
+  const publicPaths = ['/', '/login', '/register', '/verify-email'];
+  const isPublic = publicPaths.some(path => pathname === path || pathname.startsWith(path + '/'));
+
+  if (isPublic) {
+    return res;
+  }
+
+  // Block all /dashboard routes if not logged in
+  if (pathname.startsWith('/dashboard')) {
+    if (!session?.session) {
+      const loginUrl = new URL('/login', req.url);
+      loginUrl.searchParams.set('redirect', pathname); // optional: redirect back after login
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Extra rule: only sellers can access /dashboard/upload
+    if (pathname.startsWith('/dashboard/upload')) {
+      const role = session.session.user.user_metadata?.role;
+      if (role !== 'seller') {
+        return NextResponse.redirect(new URL('/', req.url));
+      }
+    }
+  }
+
+  return res;
 }
 
+// Only match dashboard paths
 export const config = {
-  matcher: '/api/:path*',
-}
+  matcher: ['/dashboard/:path*'],
+};
+
 

@@ -2,12 +2,11 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  experimental: {
-    serverActions: true, // ✅ You already have this
+  images: {
+    loader: 'custom',
+    loaderFile: './cloudinaryLoader.js',
+    domains: ['res.cloudinary.com'],
   },
 };
 
 module.exports = nextConfig;
-
-
