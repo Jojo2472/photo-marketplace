@@ -4,12 +4,12 @@ export const dynamic = "force-dynamic";
 
 
 import Link from 'next/link'
-import { createServerClient } from '@/utils/supabase/server'
+import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation'
 import CreateAlbumButton from './CreateAlbumButton'
 
 export default async function DashboardPage() {
-  const supabase = createServerClient()
+  const supabase = createClient()
 
   const {
     data: { session },
