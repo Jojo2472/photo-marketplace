@@ -11,7 +11,7 @@ export default async function AlbumPage({
   params: { albumId: string }
   searchParams: { upload?: string }
 }) {
-  const supabase = createClient(cookies)
+  const supabase = createClient()
   const { data: album, error } = await supabase
     .from('albums')
     .select('*')
