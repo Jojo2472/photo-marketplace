@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from 'path';
-import sharp from 'sharp';
-import { mkdir } from 'fs/promises';
-import { createClient } from '@/utils/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
+import { createClient } from '@supabase/supabase-js';
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
@@ -16,42 +15,35 @@ export async function POST(req: NextRequest) {
 
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
-  const filename = Date.now() + '-' + file.name;
+  const filename = `${uuidv4()}-${file.name}`;
+  const uploadDir = path.join(process.cwd(), 'public/uploads/originals');
 
-  const originalPath = path.join(process.cwd(), 'public/uploads/originals', filename);
-  const blurredPath = path.join(process.cwd(), 'public/uploads/blurred', filename);
+  // Ensure the directory exists
+  await fs.mkdir(uploadDir, { recursive: true });
 
-  await mkdir(path.dirname(originalPath), { recursive: true });
-  await mkdir(path.dirname(blurredPath), { recursive: true });
+  // Save the file
+  const filepath = path.join(uploadDir, filename);
+  await fs.writeFile(filepath, buffer);
 
-  // Save original photo
-  fs.writeFileSync(originalPath, buffer);
-
-  // Add blur + watermark
-  const watermarkSvg = Buffer.from(
-    `<svg width="500" height="60"><text x="0" y="45" font-size="45" fill="white">No Refunds</text></svg>`
+  // ✅ Create Supabase client with required arguments
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  await sharp(buffer)
-    .resize(1000)
-    .blur(20)
-    .composite([{ input: watermarkSvg, gravity: 'south' }])
-    .toFile(blurredPath);
-
-  // Save photo data to Supabase
-  const supabase = createClient();
+  // Insert photo data into Supabase
   const { data, error } = await supabase.from('photos').insert({
     album_id: albumId,
     original_url: `/uploads/originals/${filename}`,
-    blurred_url: `/uploads/blurred/${filename}`
+    created_at: new Date().toISOString(),
   });
 
   if (error) {
-    console.error('Error inserting photo record:', error);
-    return NextResponse.json({ error: 'Upload saved but DB insert failed' }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true, photo: data?.[0] });
+  return NextResponse.json({ success: true, data });
 }
+
 
 
