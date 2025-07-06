@@ -4,7 +4,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/utils/supabase/client'
+import { createBrowserClient } from '@/utils/supabase/client'
 
 export default function CreateAlbumButton() {
   const router = useRouter()
@@ -12,7 +12,8 @@ export default function CreateAlbumButton() {
   const [albumName, setAlbumName] = useState('')
   const [creating, setCreating] = useState(false)
 
-  const supabase = createClient()
+  const supabase = createBrowserClient()
+
 
   const handleCreate = async () => {
     if (!albumName.trim()) {
