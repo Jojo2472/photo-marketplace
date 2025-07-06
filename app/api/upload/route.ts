@@ -1,6 +1,9 @@
 // 1. /app/api/upload/route.ts (server-side handler for local photo uploads)
+
+export const runtime = 'nodejs'
+
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile } from 'fs/promises'
+import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -21,7 +24,7 @@ export async function POST(req: NextRequest) {
   const filePath = path.join(uploadDir, filename)
 
   // Ensure folder exists
-  await fs.mkdir(uploadDir, { recursive: true })
+  await mkdir(uploadDir, { recursive: true })
 
   await writeFile(filePath, buffer)
 
