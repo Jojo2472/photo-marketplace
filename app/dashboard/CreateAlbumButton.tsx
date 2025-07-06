@@ -23,7 +23,11 @@ export default function CreateAlbumButton() {
 
     const response = await supabase
       .from('albums')
-      .insert({ name: 'New Album', user_id: user.id })
+      .insert({
+        name: 'New Album',
+        description: 'This is a default album description.',
+        user_id: user.id
+      })
       .select()
       .single()
 
@@ -34,8 +38,7 @@ export default function CreateAlbumButton() {
     }
 
     const albumId = response.data.id
-    router.push(`/dashboard/albums/${albumId}`)
-
+    router.push(`/dashboard/albums/${albumId}?upload=1`)
   }
 
   return (
@@ -48,4 +51,3 @@ export default function CreateAlbumButton() {
     </button>
   )
 }
-
