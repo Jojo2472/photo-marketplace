@@ -4,7 +4,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createBrowserClient } from '@/utils/supabase/client'
+import { createSupabaseBrowserClient } from '@/utils/supabase/client'
+
 
 export default function CreateAlbumButton() {
   const router = useRouter()
