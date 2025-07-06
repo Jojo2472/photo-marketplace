@@ -34,7 +34,8 @@ export default function CreateAlbumButton() {
     }
 
     const albumId = response.data.id
-    router.push(`/albums/${albumId}`)
+    router.push(`/dashboard/albums/${albumId}`)
+
   }
 
   return (
