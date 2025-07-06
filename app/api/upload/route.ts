@@ -1,49 +1,34 @@
-import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
-import { createClient } from '@supabase/supabase-js';
+// 1. /app/api/upload/route.ts (server-side handler for local photo uploads)
+import { NextRequest, NextResponse } from 'next/server'
+import { writeFile } from 'fs/promises'
+import path from 'path'
+import { v4 as uuidv4 } from 'uuid'
 
 export async function POST(req: NextRequest) {
-  const formData = await req.formData();
-  const file = formData.get('file') as File;
-  const albumId = formData.get('albumId') as string;
+  const formData = await req.formData()
+  const file: File | null = formData.get('file') as unknown as File
+  const albumId = formData.get('albumId') as string
 
   if (!file || !albumId) {
-    return NextResponse.json({ error: 'Missing file or albumId' }, { status: 400 });
+    return NextResponse.json({ error: 'Missing file or albumId' }, { status: 400 })
   }
 
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
-  const filename = `${uuidv4()}-${file.name}`;
-  const uploadDir = path.join(process.cwd(), 'public/uploads/originals');
+  const bytes = await file.arrayBuffer()
+  const buffer = Buffer.from(bytes)
 
-  // Ensure the directory exists
-  await fs.mkdir(uploadDir, { recursive: true });
+  const filename = uuidv4() + path.extname(file.name)
+  const uploadDir = path.join(process.cwd(), 'public', 'uploads', albumId)
+  const filePath = path.join(uploadDir, filename)
 
-  // Save the file
-  const filepath = path.join(uploadDir, filename);
-  await fs.writeFile(filepath, buffer);
+  // Ensure folder exists
+  await fs.mkdir(uploadDir, { recursive: true })
 
-  // ✅ Create Supabase client with required arguments
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  await writeFile(filePath, buffer)
 
-  // Insert photo data into Supabase
-  const { data, error } = await supabase.from('photos').insert({
-    album_id: albumId,
-    original_url: `/uploads/originals/${filename}`,
-    created_at: new Date().toISOString(),
-  });
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json({ success: true, data });
+  const url = `/uploads/${albumId}/${filename}`
+  return NextResponse.json({ url })
 }
+
 
 
 

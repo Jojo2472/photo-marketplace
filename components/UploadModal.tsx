@@ -1,82 +1,63 @@
 'use client'
 
-import { useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { createComponentClient } from '@/utils/supabase/client'
+import { useState } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 
-export default function UploadModal({ albumId }: { albumId: string }) {
-  const fileInputRef = useRef<HTMLInputElement>(null)
+export default function UploadModal() {
+  const searchParams = useSearchParams()
   const router = useRouter()
-  const supabase = createComponentClient()
+  const albumId = searchParams.get('upload') ? window.location.pathname.split('/').pop() : null
+
+  const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   const handleUpload = async () => {
-    const file = fileInputRef.current?.files?.[0]
-    if (!file) return
+    if (!file || !albumId) return alert('Missing file or album ID.')
 
     setUploading(true)
-    setError(null)
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('albumId', albumId)
 
-    const user = (await supabase.auth.getUser()).data.user
-    if (!user) {
-      setError('You must be logged in to upload.')
-      setUploading(false)
-      return
-    }
-
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${Date.now()}.${fileExt}`
-    const filePath = `${user.id}/${fileName}`
-
-    const { error: uploadError } = await supabase.storage
-      .from('photos')
-      .upload(filePath, file)
-
-    if (uploadError) {
-      setError(uploadError.message)
-      setUploading(false)
-      return
-    }
-
-    const { error: dbError } = await supabase.from('photos').insert({
-      album_id: albumId,
-      user_id: user.id,
-      file_path: filePath,
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
     })
 
-    if (dbError) {
-      setError(dbError.message)
+    if (!res.ok) {
+      alert('Upload failed.')
       setUploading(false)
       return
     }
 
-    router.push(`/dashboard/albums/${albumId}`)
+    // success
+    router.replace(window.location.pathname) // refresh without ?upload param
   }
 
-  const closeModal = () => {
-    router.push(`/dashboard/albums/${albumId}`)
-  }
+  if (!searchParams.get('upload')) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded shadow-lg w-full max-w-md relative">
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded shadow-lg relative w-full max-w-md">
         <button
-          onClick={closeModal}
-          className="absolute top-2 right-2 text-gray-500 hover:text-black"
+          onClick={() => router.replace(window.location.pathname)}
+          className="absolute top-2 right-3 text-xl"
         >
           ×
         </button>
 
-        <h2 className="text-xl font-bold mb-4">Upload Photo</h2>
+        <h2 className="text-2xl font-bold mb-4">Upload Photo</h2>
 
-        <input type="file" ref={fileInputRef} className="mb-4" />
-
-        {error && <p className="text-red-600 text-sm mb-2">{error}</p>}
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => setFile(e.target.files?.[0] || null)}
+          className="mb-4"
+        />
 
         <button
           onClick={handleUpload}
-          disabled={uploading}
+          disabled={uploading || !file}
           className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
         >
           {uploading ? 'Uploading...' : 'Upload'}
