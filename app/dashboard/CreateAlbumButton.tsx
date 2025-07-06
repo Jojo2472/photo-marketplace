@@ -4,12 +4,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/utils/supabase/client'
+import { createComponentClient } from '@/utils/supabase/client'
 
 export default function CreateAlbumButton() {
   const router = useRouter()
   const [creating, setCreating] = useState(false)
-  const supabase = createClient()
+  const supabase = createComponentClient() // ✅ Frontend-safe Supabase client
 
   const handleCreate = async () => {
     setCreating(true)
@@ -47,3 +47,4 @@ export default function CreateAlbumButton() {
     </button>
   )
 }
+
