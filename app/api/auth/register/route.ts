@@ -33,10 +33,11 @@ export async function POST(req: NextRequest) {
       return new Response(error.message, { status: 400 });
     }
 
-    await sendVerificationEmail(email);
+    await sendVerificationEmail(email, `${process.env.NEXT_PUBLIC_SITE_URL}/verify`);
     return new Response(JSON.stringify(user), { status: 200 });
   } catch (err) {
     console.error('Registration error:', err);
     return new Response('Internal Server Error', { status: 500 });
   }
 }
+
