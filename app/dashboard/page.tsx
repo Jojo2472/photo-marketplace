@@ -1,60 +1,50 @@
 // app/dashboard/page.tsx
 
-export const dynamic = "force-dynamic";
-
-import Link from "next/link";
-import { createServerClient } from "@/utils/supabase/server";
-import { redirect } from "next/navigation";
+import Link from 'next/link'
+import { createServerClient } from '@/utils/supabase/server'
+import { redirect } from 'next/navigation'
+import CreateAlbumButton from './CreateAlbumButton'
 
 export default async function DashboardPage() {
-  const supabase = createServerClient();
+  const supabase = createServerClient()
 
   const {
     data: { session },
-  } = await supabase.auth.getSession();
+  } = await supabase.auth.getSession()
 
   if (!session) {
-    return redirect("/login");
+    return redirect('/login')
   }
 
-  const { data: albums } = await supabase
-    .from("albums")
-    .select("*")
-    .eq("user_id", session.user.id);
+  const { data: albums, error } = await supabase
+    .from('albums')
+    .select('*')
+    .eq('user_id', session.user.id)
 
   return (
     <div className="max-w-4xl mx-auto mt-8">
-      <div className="flex justify-between items-center mb-6">
+      <div className="mb-6 flex justify-between items-center">
         <h1 className="text-2xl font-bold">Your Albums</h1>
-        <Link
-          href="/dashboard/albums/new"
-          className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
-        >
-          New Album
-        </Link>
+        <CreateAlbumButton />
       </div>
 
       {albums?.length ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <ul className="space-y-4">
           {albums.map((album) => (
-            <Link
-              key={album.id}
-              href={`/dashboard/albums/${album.id}`}
-              className="border rounded-xl p-4 shadow hover:shadow-lg transition"
-            >
-              <h2 className="font-semibold text-lg">{album.name}</h2>
-              <p className="text-sm text-gray-500">{album.description}</p>
-              <div className="mt-4 flex justify-between">
-                <span className="text-xs text-gray-400">
-                  Created: {new Date(album.created_at).toLocaleDateString()}
-                </span>
-              </div>
-            </Link>
+            <li key={album.id}>
+              <Link
+                href={`/dashboard/albums/${album.id}`}
+                className="block p-4 bg-gray-100 rounded hover:bg-gray-200 transition"
+              >
+                <div className="font-semibold">{album.name}</div>
+                <div className="text-sm text-gray-600">{album.description}</div>
+              </Link>
+            </li>
           ))}
-        </div>
+        </ul>
       ) : (
-        <p className="text-gray-500">No albums yet. Create one to get started.</p>
+        <p className="text-gray-600">No albums yet. Create one to get started!</p>
       )}
     </div>
-  );
+  )
 }
