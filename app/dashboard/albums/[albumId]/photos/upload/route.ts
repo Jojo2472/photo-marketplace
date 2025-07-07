@@ -3,7 +3,11 @@ import { createClient } from '@/utils/supabase/client'
 import { v4 as uuid } from 'uuid'
 
 export async function POST(req: NextRequest, { params }: { params: { albumId: string } }) {
-  const supabase = createClient()
+  const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+
   const { albumId } = params
 
   const formData = await req.formData()
