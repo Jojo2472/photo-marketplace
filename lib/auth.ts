@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { createClient } from '@/utils/supabase/server';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret123';
 
@@ -17,3 +18,11 @@ export function verifyAuthToken(req: Request): { userId: string; role: string } 
     return null;
   }
 }
+
+export async function getUserIdFromRequest(): Promise<string | null> {
+  const supabase = createClient();
+  const { data } = await supabase.auth.getUser();
+  return data?.user?.id || null;
+}
+
+
