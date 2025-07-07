@@ -2,10 +2,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createSupabaseBrowserClient } from '@/utils/supabase/client'
+import { createComponentClient } from '@/utils/supabase/client'
 
 export default function DashboardPage() {
-  const supabase = createSupabaseBrowserClient()
+  const supabase = createComponentClient()
   const [userEmail, setUserEmail] = useState<string | null>(null)
 
   useEffect(() => {
