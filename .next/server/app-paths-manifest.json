@@ -1,5 +1,1 @@
-{
-  "/dashboard/page": "app/dashboard/page.js",
-  "/(auth)/login/page": "app/(auth)/login/page.js",
-  "/dashboard/albums/[albumId]/upload/page": "app/dashboard/albums/[albumId]/upload/page.js"
-}
+{}
