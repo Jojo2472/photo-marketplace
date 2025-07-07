@@ -4,7 +4,7 @@ import { getUserIdFromRequest } from '@/lib/auth';
 
 export async function POST(req: Request, { params }: { params: { albumId: string } }) {
   const supabase = createClient();
-  const userId = await getUserIdFromRequest(req);
+  const userId = await getUserIdFromRequest();
   const albumId = params.albumId;
 
   if (!userId) {

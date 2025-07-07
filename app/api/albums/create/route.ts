@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Missing album name' }, { status: 400 });
   }
 
-  const userId = await getUserIdFromRequest(req);
+  const userId = await getUserIdFromRequest();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
