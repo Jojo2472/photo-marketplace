@@ -5,7 +5,7 @@ import { Database } from "@/types/supabase";
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { albumId: string } }
 ) {
   const cookieStore = cookies();
   const supabase = createRouteHandlerClient<Database>({ cookies: () => cookieStore });
@@ -18,7 +18,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const albumId = params.id;
+  const albumId = params.albumId
 
   // Optional: delete related photos too if you want
   await supabase.from("photos").delete().eq("album_id", albumId);
