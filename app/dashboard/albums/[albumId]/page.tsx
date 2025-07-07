@@ -1,15 +1,20 @@
+// app/dashboard/albums/[albumId]/page.tsx
 import dynamic from 'next/dynamic';
 
 const AlbumClient = dynamic(() => import('./AlbumClient'), {
   ssr: false,
-  loading: () => <div>Loading album...</div>, // <- this helps prevent the build error
+  loading: () => <div>Loading album page...</div>,
 });
 
 export default function AlbumPage() {
+  // 💡 Add something *static* to prevent hydration bug
   return (
-    <div>
+    <>
+      <div suppressHydrationWarning={true} className="sr-only">
+        Server-rendered fallback
+      </div>
       <AlbumClient />
-    </div>
+    </>
   );
 }
 
