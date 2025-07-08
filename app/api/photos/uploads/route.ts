@@ -1,15 +1,15 @@
 // /app/api/photos/uploads/route.ts
 
-export const runtime = 'nodejs'; // Use Node.js runtime
-export const dynamic = 'force-dynamic'; // Disable built-in body parsing
-
 import { NextResponse } from 'next/server';
 import formidable from 'formidable';
 import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
 
-export async function POST(req: Request) {
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+export async function POST(req: Request): Promise<NextResponse> {
   const uploadDir = path.join(process.cwd(), 'public', 'uploads');
   const watermarkedDir = path.join(uploadDir, 'watermarked');
 
@@ -25,22 +25,16 @@ export async function POST(req: Request) {
     keepExtensions: true,
   });
 
-  return new Promise((resolve) => {
+  return new Promise<NextResponse>((resolve) => {
     form.parse(req as any, async (err, fields, files) => {
       if (err) {
-        resolve(
-          NextResponse.json({ error: 'Upload failed' }, { status: 500 })
-        );
+        resolve(NextResponse.json({ error: 'Upload failed' }, { status: 500 }));
         return;
       }
 
-      // Handle single file or array of files
       const file = Array.isArray(files.file) ? files.file[0] : files.file;
-
       if (!file) {
-        resolve(
-          NextResponse.json({ error: 'No file uploaded' }, { status: 400 })
-        );
+        resolve(NextResponse.json({ error: 'No file uploaded' }, { status: 400 }));
         return;
       }
 
@@ -62,9 +56,7 @@ export async function POST(req: Request) {
           ])
           .toFile(outputFilePath);
       } catch {
-        resolve(
-          NextResponse.json({ error: 'Watermarking failed' }, { status: 500 })
-        );
+        resolve(NextResponse.json({ error: 'Watermarking failed' }, { status: 500 }));
         return;
       }
 
