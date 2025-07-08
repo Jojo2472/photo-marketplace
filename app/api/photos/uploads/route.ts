@@ -6,13 +6,9 @@ import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
 
-// Set runtime for Node.js
+export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-
-// For Next.js 14: disable default body parsing by setting this to 0
-export const requestBodyLimit = {
-  sizeLimit: 0,
-};
+export const bodyParser = false;
 
 export async function POST(req: Request) {
   const form = new formidable.IncomingForm();
