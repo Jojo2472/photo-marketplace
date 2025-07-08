@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { createComponentClient } from '@/utils/supabase/client';
 import Link from 'next/link';
-import { AlbumModal } from '@/components/AlbumModal'
+import AlbumModal from '@/components/AlbumModal'; // No named import
 
 export type Album = {
   id: string;
@@ -16,7 +16,7 @@ export type Album = {
 export default function DashboardPage() {
   const [albums, setAlbums] = useState<Album[]>([]);
   const [loading, setLoading] = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [refresh, setRefresh] = useState(false); // used to trigger refetch
   const supabase = createComponentClient();
 
   useEffect(() => {
@@ -43,21 +43,18 @@ export default function DashboardPage() {
     }
 
     fetchAlbums();
-  }, []);
+  }, [refresh]); // refetch whenever refresh state toggles
+
+  const handleAlbumCreated = () => {
+    setRefresh((prev) => !prev);
+  };
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Your Albums</h1>
-        <button
-          className="bg-purple-600 text-white px-4 py-2 rounded-xl hover:bg-purple-700"
-          onClick={() => setModalOpen(true)}
-        >
-          + New Album
-        </button>
+        <AlbumModal onAlbumCreated={handleAlbumCreated} />
       </div>
-
-      <AlbumModal open={modalOpen} onClose={() => setModalOpen(false)} onAlbumCreated={setAlbums} />
 
       {loading ? (
         <p>Loading albums...</p>
@@ -72,7 +69,10 @@ export default function DashboardPage() {
               className="border rounded-xl overflow-hidden shadow hover:shadow-lg transition"
             >
               <img
-                src={album.cover_url || 'https://jllzzkqlqaoiotluyexb.supabase.co/storage/v1/object/public/album-covers/placeholder-cover.jpg'}
+                src={
+                  album.cover_url ||
+                  'https://jllzzkqlqaoiotluyexb.supabase.co/storage/v1/object/public/album-covers/placeholder-cover.jpg'
+                }
                 alt={album.name}
                 className="w-full h-48 object-cover"
               />
