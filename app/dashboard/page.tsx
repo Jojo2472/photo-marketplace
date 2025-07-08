@@ -72,7 +72,7 @@ export default function DashboardPage() {
               className="border rounded-xl overflow-hidden shadow hover:shadow-lg transition"
             >
               <img
-                src={album.cover_url || '/placeholder-cover.jpg'}
+                src={album.cover_url || 'https://jllzzkqlqaoiotluyexb.supabase.co/storage/v1/object/public/album-covers/placeholder-cover.jpg'}
                 alt={album.name}
                 className="w-full h-48 object-cover"
               />

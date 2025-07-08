@@ -28,7 +28,7 @@ export default async function AlbumListPage({ searchParams }: { searchParams: an
             <Link href={`/dashboard/albums/${album.id}`}>
               <div className="relative h-48 w-full">
                 <Image
-                  src={album.cover_url || '/placeholder.jpg'}
+                  src={album.cover_url || 'https://jllzzkqlqaoiotluyexb.supabase.co/storage/v1/object/public/album-covers/placeholder-cover.jpg'}
                   alt={album.name}
                   fill
                   className="object-cover"

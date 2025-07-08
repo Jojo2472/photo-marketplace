@@ -77,11 +77,12 @@ export default function AlbumDetailPage() {
           {album.cover_url && (
             <div className="relative h-48 w-full sm:w-96">
               <Image
-                src={album.cover_url}
+                src={album.cover_url || "https://jllzzkqlqaoiotluyexb.supabase.co/storage/v1/object/public/album-covers/placeholder-cover.jpg"}
                 alt="Album cover"
                 fill
                 className="object-cover rounded"
               />
+
             </div>
           )}
         </>
