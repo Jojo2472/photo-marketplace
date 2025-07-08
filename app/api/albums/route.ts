@@ -1,8 +1,6 @@
 // app/api/albums/route.ts
 
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile } from 'fs/promises'
-import path from 'path'
 import { randomUUID } from 'crypto'
 import { createClient } from '@/utils/supabase/client'
 
@@ -33,10 +31,24 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(bytes)
 
     const fileName = `${randomUUID()}-${file.name}`
-    const filePath = path.join(process.cwd(), 'public', 'uploads', 'covers', fileName)
 
-    await writeFile(filePath, buffer)
-    coverUrl = `/uploads/covers/${fileName}`
+    const { data, error: uploadError } = await supabase.storage
+      .from('album-covers')
+      .upload(fileName, buffer, {
+        contentType: file.type,
+        upsert: true,
+      })
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError)
+      return NextResponse.json({ error: 'Failed to upload image' }, { status: 500 })
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from('album-covers').getPublicUrl(fileName)
+
+    coverUrl = publicUrl
   }
 
   const { error: insertError } = await supabase.from('albums').insert({
@@ -47,7 +59,7 @@ export async function POST(req: NextRequest) {
   })
 
   if (insertError) {
-    console.error(insertError)
+    console.error('Insert error:', insertError)
     return NextResponse.json({ error: insertError.message }, { status: 500 })
   }
 
