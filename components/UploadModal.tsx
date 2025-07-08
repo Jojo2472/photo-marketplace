@@ -31,7 +31,7 @@ export default function UploadModal({ albumId }: { albumId: string }) {
       formData.append('description', description);
       formData.append('albumId', albumId);
 
-      const res = await fetch('/api/photos/upload', {
+      const res = await fetch('/api/photos/uploads', {
         method: 'POST',
         body: formData,
       });
