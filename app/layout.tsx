@@ -1,16 +1,26 @@
-// app/layout.tsx
-import './globals.css';
+'use client'
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  try {
-    return (
-      <html lang="en">
-        <body>{children}</body>
-      </html>
-    );
-  } catch (err) {
-    console.error('SSR layout error:', err);
-    return <html><body><div>Layout failed</div></body></html>;
-  }
+import './globals.css'
+import { useState } from 'react'
+import { createBrowserSupabaseClient } from '@supabase/auth-helpers-nextjs'
+import { SessionContextProvider } from '@supabase/auth-helpers-react'
+import { type Session } from '@supabase/auth-helpers-nextjs'
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const [supabaseClient] = useState(() => createBrowserSupabaseClient<Session>())
+
+  return (
+    <html lang="en">
+      <body>
+        <SessionContextProvider supabaseClient={supabaseClient}>
+          {children}
+        </SessionContextProvider>
+      </body>
+    </html>
+  )
 }
 
