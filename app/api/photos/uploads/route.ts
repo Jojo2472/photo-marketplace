@@ -4,15 +4,14 @@ export const runtime = 'nodejs'; // Use Node.js runtime for this API route
 export const dynamic = 'force-dynamic'; // Disable Next.js built-in body parser for this route
 
 import { NextResponse } from 'next/server';
-import formidable, { File } from 'formidable';
-import { formidableUpload } from 'formidable-upload';
+import formidable from 'formidable';
 import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
+import type { IncomingMessage } from 'http';
 
 export async function POST(req: Request) {
-  // Use formidableUpload helper to properly adapt Next.js Request to IncomingMessage
-  const form = formidableUpload(new formidable.IncomingForm());
+  const form = new formidable.IncomingForm();
 
   const uploadDir = path.join(process.cwd(), 'public', 'uploads');
   const watermarkedDir = path.join(process.cwd(), 'public', 'uploads', 'watermarked');
@@ -20,14 +19,15 @@ export async function POST(req: Request) {
   if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
   if (!fs.existsSync(watermarkedDir)) fs.mkdirSync(watermarkedDir, { recursive: true });
 
-  return new Promise<NextResponse>(async (resolve) => {
-    form.parse(req, async (err, fields, files) => {
+  return new Promise<NextResponse>((resolve) => {
+    // Cast Next.js Request to IncomingMessage for formidable
+    form.parse(req as unknown as IncomingMessage, async (err, fields, files) => {
       if (err) {
         resolve(NextResponse.json({ error: 'Upload failed' }, { status: 500 }));
         return;
       }
 
-      const file = files.file as File;
+      const file = files.file as formidable.File;
       if (!file) {
         resolve(NextResponse.json({ error: 'No file uploaded' }, { status: 400 }));
         return;
