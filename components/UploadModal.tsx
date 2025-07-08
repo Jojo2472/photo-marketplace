@@ -25,35 +25,35 @@ export default function UploadModal({ albumId }: { albumId: string }) {
     setError(null);
 
     try {
+      // Prepare FormData to send file + fields
       const formData = new FormData();
       formData.append('file', file);
       formData.append('albumId', albumId);
       formData.append('description', description);
 
+      // Call local upload API route
       const res = await fetch('/api/photos/upload', {
         method: 'POST',
         body: formData,
       });
 
-      const data = await res.json();
-
-      if (!res.ok || data.error) {
-        setError(data.error || 'Upload failed');
+      if (!res.ok) {
+        const errData = await res.json();
+        setError(errData.error || 'Upload failed');
         setUploading(false);
         return;
       }
 
-      // Successful upload: close modal, reset form, refresh page
+      // Success: you can handle response here if needed
       setOpen(false);
       setFile(null);
       setDescription('');
-      router.refresh();
-
-    } catch (err) {
-      setError('Upload failed: ' + (err as Error).message);
+      router.refresh(); // Refresh page to show new photo
+    } catch (e) {
+      setError('Upload failed. Please try again.');
+    } finally {
+      setUploading(false);
     }
-
-    setUploading(false);
   };
 
   return (

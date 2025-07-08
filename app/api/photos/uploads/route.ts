@@ -5,36 +5,23 @@ import formidable from 'formidable';
 import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
 
-// Disable Next.js default body parser for formidable
-export const config = {
-  api: {
-    bodyParser: false,
-  },
+// Set runtime for Node.js
+export const runtime = 'nodejs';
+
+// For Next.js 14: disable default body parsing by setting this to 0
+export const requestBodyLimit = {
+  sizeLimit: 0,
 };
 
 export async function POST(req: Request) {
-  const supabase = createServerComponentClient({ cookies });
-  
-  // Authenticate user
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   const form = new formidable.IncomingForm();
 
   // Upload folders inside /public for serving later
   const uploadDir = path.join(process.cwd(), 'public', 'uploads');
   const watermarkedDir = path.join(process.cwd(), 'public', 'uploads', 'watermarked');
 
-  // Ensure directories exist
+  // Make sure directories exist
   if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
   if (!fs.existsSync(watermarkedDir)) fs.mkdirSync(watermarkedDir, { recursive: true });
 
@@ -58,7 +45,7 @@ export async function POST(req: Request) {
       const inputFilePath = file.filepath;
       const filename = path.basename(inputFilePath);
 
-      // Watermark the image (example: simple text watermark)
+      // Watermark the image (example: add text watermark)
       const outputFilePath = path.join(watermarkedDir, filename);
 
       try {
@@ -79,29 +66,16 @@ export async function POST(req: Request) {
         return;
       }
 
-      // Save metadata to Supabase DB
-      const { error: insertError } = await supabase
-        .from('photos')
-        .insert({
-          album_id: fields.albumId,
-          user_id: user.id,
-          original_url: `/uploads/${filename}`,
-          watermarked_url: `/uploads/watermarked/${filename}`,
-          description: fields.description || '',
-          created_at: new Date().toISOString(),
-        });
-
-      if (insertError) {
-        resolve(NextResponse.json({ error: 'Failed to save photo metadata' }, { status: 500 }));
-        return;
-      }
+      // Return URLs to uploaded and watermarked images:
+      const uploadedUrl = `/uploads/${filename}`;
+      const watermarkedUrl = `/uploads/watermarked/${filename}`;
 
       resolve(
         NextResponse.json({
           success: true,
-          uploadedUrl: `/uploads/${filename}`,
-          watermarkedUrl: `/uploads/watermarked/${filename}`,
-          fields,
+          uploadedUrl,
+          watermarkedUrl,
+          fields, // form fields like title, description
         })
       );
     });
