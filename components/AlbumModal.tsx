@@ -1,70 +1,128 @@
-'use client'
+'use client';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { useRef, useState } from "react"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
-import { Album } from "@/types"
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { createComponentClient } from '@/utils/supabase/client';
+import { useRouter } from 'next/navigation';
 
-interface AlbumModalProps {
-  open: boolean
-  onClose: () => void
-  onAlbumCreated: React.Dispatch<React.SetStateAction<Album[]>>
-}
+export default function AlbumModal({
+  onAlbumCreated,
+}: {
+  onAlbumCreated?: () => void;
+}) {
+  const supabase = createComponentClient();
+  const router = useRouter();
 
-export function AlbumModal({ open, onClose, onAlbumCreated }: AlbumModalProps) {
-  const formRef = useRef<HTMLFormElement>(null)
-  const [loading, setLoading] = useState(false)
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault()
-    setLoading(true)
+  const handleCreate = async () => {
+    setCreating(true);
+    setError(null);
 
-    const formData = new FormData(formRef.current!)
-    const res = await fetch("/api/albums", {
-      method: "POST",
-      body: formData,
-    })
-
-    const data = await res.json()
-
-    if (res.ok) {
-      onAlbumCreated(data) // Pass updated albums back to parent
-      onClose()
-    } else {
-      alert(data.error || "Something went wrong.")
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      setError('You must be logged in.');
+      setCreating(false);
+      return;
     }
 
-    setLoading(false)
-  }
+    let cover_url = null;
+
+    if (coverFile) {
+      const filePath = `covers/${user.id}/${Date.now()}-${coverFile.name}`;
+      const { error: uploadError } = await supabase
+        .storage
+        .from('album-covers')
+        .upload(filePath, coverFile);
+
+      if (uploadError) {
+        setError('Cover upload failed: ' + uploadError.message);
+        setCreating(false);
+        return;
+      }
+
+      const { data: urlData } = supabase
+        .storage
+        .from('album-covers')
+        .getPublicUrl(filePath);
+
+      cover_url = urlData?.publicUrl ?? null;
+    }
+
+    const { data, error: insertError } = await supabase
+      .from('albums')
+      .insert({
+        name,
+        description,
+        cover_url,
+        user_id: user.id
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      setError('Album creation failed: ' + insertError.message);
+      setCreating(false);
+      return;
+    }
+
+    if (onAlbumCreated) onAlbumCreated();
+
+    setOpen(false);
+    router.push(`/dashboard/albums/${data.id}?upload=1`);
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create Album</DialogTitle>
-        </DialogHeader>
-        <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Album Name</Label>
-            <Input id="name" name="name" required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea id="description" name="description" rows={3} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="cover">Album Cover</Label>
-            <Input id="cover" name="cover" type="file" accept="image/*" />
-          </div>
-          <Button type="submit" disabled={loading}>
-            {loading ? "Creating..." : "Create"}
-          </Button>
-        </form>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <button className="bg-purple-700 text-white px-4 py-2 rounded hover:bg-purple-800">
+          + Create New Album
+        </button>
+      </DialogTrigger>
+
+      <DialogContent className="max-w-md w-full space-y-4">
+        <h2 className="text-lg font-semibold">Create New Album</h2>
+
+        <input
+          type="text"
+          placeholder="Album name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full p-2 border rounded"
+        />
+
+        <textarea
+          placeholder="Description (optional)"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="w-full p-2 border rounded"
+        />
+
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => {
+            if (e.target.files?.[0]) {
+              setCoverFile(e.target.files[0]);
+            }
+          }}
+        />
+
+        {error && <p className="text-red-600">{error}</p>}
+
+        <button
+          onClick={handleCreate}
+          disabled={creating}
+          className="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded w-full"
+        >
+          {creating ? 'Creating Album...' : 'Create Album'}
+        </button>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
-
