@@ -16,41 +16,40 @@ export default function UploadModal({ albumId }: { albumId: string }) {
   const [error, setError] = useState<string | null>(null);
 
   const handleUpload = async () => {
-    if (!file) {
-      setError('Please select a file.');
-      return;
-    }
-
     setUploading(true);
     setError(null);
 
+    if (!file) {
+      setError('Please select a file.');
+      setUploading(false);
+      return;
+    }
+
     try {
-      // Prepare FormData to send file + fields
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('albumId', albumId);
       formData.append('description', description);
+      formData.append('albumId', albumId);
 
-      // Call local upload API route
       const res = await fetch('/api/photos/upload', {
         method: 'POST',
         body: formData,
       });
 
-      if (!res.ok) {
-        const errData = await res.json();
-        setError(errData.error || 'Upload failed');
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        setError(data.error || 'Upload failed');
         setUploading(false);
         return;
       }
 
-      // Success: you can handle response here if needed
       setOpen(false);
       setFile(null);
       setDescription('');
-      router.refresh(); // Refresh page to show new photo
-    } catch (e) {
-      setError('Upload failed. Please try again.');
+      router.refresh(); // Refresh to show new photo
+    } catch (err) {
+      setError('Upload failed: ' + (err as Error).message);
     } finally {
       setUploading(false);
     }
