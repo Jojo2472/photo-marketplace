@@ -45,7 +45,8 @@ export default function UploadModal({ open, onClose, albumId }: UploadModalProps
           <DialogTitle>Upload a Photo</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" encType="multipart/form-data">
+
           <input
             type="file"
             accept="image/*"
