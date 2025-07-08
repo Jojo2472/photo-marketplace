@@ -2,13 +2,11 @@
 
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import { createComponentClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 
 export default function UploadModal({ albumId }: { albumId: string }) {
-  const supabase = createComponentClient();
   const router = useRouter();
 
   const [open, setOpen] = useState(false);
@@ -18,59 +16,43 @@ export default function UploadModal({ albumId }: { albumId: string }) {
   const [error, setError] = useState<string | null>(null);
 
   const handleUpload = async () => {
+    if (!file) {
+      setError('Please select a file.');
+      return;
+    }
+
     setUploading(true);
     setError(null);
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      setError('You must be logged in to upload.');
-      setUploading(false);
-      return;
-    }
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('albumId', albumId);
+      formData.append('description', description);
 
-    if (!file) {
-      setError('Please select a file.');
-      setUploading(false);
-      return;
-    }
-
-    const filePath = `photos/${user.id}/${Date.now()}-${file.name}`;
-    const { error: uploadError } = await supabase.storage
-      .from('photos')
-      .upload(filePath, file);
-
-    if (uploadError) {
-      setError('Failed to upload image: ' + uploadError.message);
-      setUploading(false);
-      return;
-    }
-
-    const { data: urlData } = supabase
-      .storage
-      .from('photos')
-      .getPublicUrl(filePath);
-
-    const imageUrl = urlData?.publicUrl ?? null;
-
-    const { error: insertError } = await supabase
-      .from('photos')
-      .insert({
-        album_id: albumId,
-        user_id: user.id,
-        image_url: imageUrl,
-        description,
+      const res = await fetch('/api/photos/upload', {
+        method: 'POST',
+        body: formData,
       });
 
-    if (insertError) {
-      setError('Failed to save photo metadata: ' + insertError.message);
-      setUploading(false);
-      return;
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        setError(data.error || 'Upload failed');
+        setUploading(false);
+        return;
+      }
+
+      // Successful upload: close modal, reset form, refresh page
+      setOpen(false);
+      setFile(null);
+      setDescription('');
+      router.refresh();
+
+    } catch (err) {
+      setError('Upload failed: ' + (err as Error).message);
     }
 
-    setOpen(false);
-    setFile(null);
-    setDescription('');
-    router.refresh(); // Refresh the album page to show new photo
     setUploading(false);
   };
 
