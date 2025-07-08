@@ -1,24 +1,23 @@
 // /app/api/photos/uploads/route.ts
 
+export const runtime = 'nodejs'; // Force Node.js runtime for this API route
+
 import { NextResponse } from 'next/server';
 import formidable from 'formidable';
 import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
 
-// Disable Next.js built-in body parser for this route
-export const runtime = 'edge'; // Optional, depending on your environment
+// Next.js 14 no longer uses 'config' for bodyParser disabling
+// Use this instead:
+export const dynamic = 'force-dynamic';
 
-export const dynamic = 'force-dynamic'; // to allow request body parsing
-
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   const form = new formidable.IncomingForm();
 
-  // Upload folders inside /public for serving later
   const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-  const watermarkedDir = path.join(uploadDir, 'watermarked');
+  const watermarkedDir = path.join(process.cwd(), 'public', 'uploads', 'watermarked');
 
-  // Make sure directories exist
   if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
   if (!fs.existsSync(watermarkedDir)) fs.mkdirSync(watermarkedDir, { recursive: true });
 
@@ -26,7 +25,7 @@ export async function POST(request: Request) {
     form.uploadDir = uploadDir;
     form.keepExtensions = true;
 
-    form.parse(request, async (err, fields, files) => {
+    form.parse(req, async (err, fields, files) => {
       if (err) {
         resolve(NextResponse.json({ error: 'Upload failed' }, { status: 500 }));
         return;
@@ -40,6 +39,7 @@ export async function POST(request: Request) {
 
       const inputFilePath = file.filepath;
       const filename = path.basename(inputFilePath);
+
       const outputFilePath = path.join(watermarkedDir, filename);
 
       try {
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
             },
           ])
           .toFile(outputFilePath);
-      } catch {
+      } catch (watermarkError) {
         resolve(NextResponse.json({ error: 'Watermarking failed' }, { status: 500 }));
         return;
       }
