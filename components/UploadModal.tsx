@@ -28,18 +28,17 @@ export default function UploadModal({ albumId }: { albumId: string }) {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('description', description);
       formData.append('albumId', albumId);
+      formData.append('description', description);
 
       const res = await fetch('/api/photos/uploads', {
         method: 'POST',
         body: formData,
       });
 
-      const data = await res.json();
-
-      if (!res.ok || data.error) {
-        setError(data.error || 'Upload failed');
+      if (!res.ok) {
+        const errorData = await res.json();
+        setError(errorData.error || 'Upload failed');
         setUploading(false);
         return;
       }
@@ -47,7 +46,7 @@ export default function UploadModal({ albumId }: { albumId: string }) {
       setOpen(false);
       setFile(null);
       setDescription('');
-      router.refresh(); // Refresh to show new photo
+      router.refresh();
     } catch (err) {
       setError('Upload failed: ' + (err as Error).message);
     } finally {

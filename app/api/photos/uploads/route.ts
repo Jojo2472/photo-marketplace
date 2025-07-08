@@ -1,6 +1,7 @@
 // /app/api/photos/uploads/route.ts
 
 export const runtime = 'nodejs'; // Force Node.js runtime for this API route
+export const dynamic = 'force-dynamic'; // Disable default body parser
 
 import { NextResponse } from 'next/server';
 import formidable from 'formidable';
@@ -8,11 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
 
-// Next.js 14 no longer uses 'config' for bodyParser disabling
-// Use this instead:
-export const dynamic = 'force-dynamic';
-
-export async function POST(req: Request) {
+export async function POST(req: Request): Promise<Response> {
   const form = new formidable.IncomingForm();
 
   const uploadDir = path.join(process.cwd(), 'public', 'uploads');
@@ -21,20 +18,18 @@ export async function POST(req: Request) {
   if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
   if (!fs.existsSync(watermarkedDir)) fs.mkdirSync(watermarkedDir, { recursive: true });
 
-  return new Promise((resolve) => {
+  return new Promise<Response>((resolve) => {
     form.uploadDir = uploadDir;
     form.keepExtensions = true;
 
     form.parse(req, async (err, fields, files) => {
       if (err) {
-        resolve(NextResponse.json({ error: 'Upload failed' }, { status: 500 }));
-        return;
+        return resolve(NextResponse.json({ error: 'Upload failed' }, { status: 500 }));
       }
 
       const file = files.file as formidable.File;
       if (!file) {
-        resolve(NextResponse.json({ error: 'No file uploaded' }, { status: 400 }));
-        return;
+        return resolve(NextResponse.json({ error: 'No file uploaded' }, { status: 400 }));
       }
 
       const inputFilePath = file.filepath;
@@ -55,15 +50,14 @@ export async function POST(req: Request) {
             },
           ])
           .toFile(outputFilePath);
-      } catch (watermarkError) {
-        resolve(NextResponse.json({ error: 'Watermarking failed' }, { status: 500 }));
-        return;
+      } catch {
+        return resolve(NextResponse.json({ error: 'Watermarking failed' }, { status: 500 }));
       }
 
       const uploadedUrl = `/uploads/${filename}`;
       const watermarkedUrl = `/uploads/watermarked/${filename}`;
 
-      resolve(
+      return resolve(
         NextResponse.json({
           success: true,
           uploadedUrl,
