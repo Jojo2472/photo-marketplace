@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { createComponentClient } from '@/utils/supabase/client';
 import Link from 'next/link';
-import AlbumModal from '@/components/AlbumModal';
+import { AlbumModal } from '@/components/AlbumModal'
 
 export type Album = {
   id: string;
