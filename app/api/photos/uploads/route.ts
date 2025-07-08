@@ -1,40 +1,42 @@
 // /app/api/photos/uploads/route.ts
 
-export const runtime = 'nodejs'; // Force Node.js runtime for this API route
-export const dynamic = 'force-dynamic'; // Disable default body parser
+export const runtime = 'nodejs'; // Node runtime for this API route
+export const dynamic = 'force-dynamic'; // Disable static optimizations
 
 import { NextResponse } from 'next/server';
-import formidable from 'formidable';
+import formidable, { File } from 'formidable';
 import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
 
-export async function POST(req: Request): Promise<Response> {
-  const form = new formidable.IncomingForm();
-
+export async function POST(req: Request) {
   const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-  const watermarkedDir = path.join(process.cwd(), 'public', 'uploads', 'watermarked');
+  const watermarkedDir = path.join(uploadDir, 'watermarked');
 
   if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
   if (!fs.existsSync(watermarkedDir)) fs.mkdirSync(watermarkedDir, { recursive: true });
 
-  return new Promise<Response>((resolve) => {
-    form.uploadDir = uploadDir;
-    form.keepExtensions = true;
+  // Create IncomingForm instance with uploadDir option
+  const form = new formidable.IncomingForm({
+    uploadDir: uploadDir,
+    keepExtensions: true,
+  });
 
+  return new Promise<NextResponse>((resolve) => {
     form.parse(req, async (err, fields, files) => {
       if (err) {
-        return resolve(NextResponse.json({ error: 'Upload failed' }, { status: 500 }));
+        resolve(NextResponse.json({ error: 'Upload failed' }, { status: 500 }));
+        return;
       }
 
-      const file = files.file as formidable.File;
+      const file = files.file as File;
       if (!file) {
-        return resolve(NextResponse.json({ error: 'No file uploaded' }, { status: 400 }));
+        resolve(NextResponse.json({ error: 'No file uploaded' }, { status: 400 }));
+        return;
       }
 
       const inputFilePath = file.filepath;
       const filename = path.basename(inputFilePath);
-
       const outputFilePath = path.join(watermarkedDir, filename);
 
       try {
@@ -50,14 +52,15 @@ export async function POST(req: Request): Promise<Response> {
             },
           ])
           .toFile(outputFilePath);
-      } catch {
-        return resolve(NextResponse.json({ error: 'Watermarking failed' }, { status: 500 }));
+      } catch (watermarkError) {
+        resolve(NextResponse.json({ error: 'Watermarking failed' }, { status: 500 }));
+        return;
       }
 
       const uploadedUrl = `/uploads/${filename}`;
       const watermarkedUrl = `/uploads/watermarked/${filename}`;
 
-      return resolve(
+      resolve(
         NextResponse.json({
           success: true,
           uploadedUrl,
