@@ -40,6 +40,7 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "@types/formidable": "^3.4.5",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.0.10",
     "@types/react": "^19.1.8",
