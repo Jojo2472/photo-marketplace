@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
       if (uploadError) {
         console.error('Upload error:', uploadError)
-        return NextResponse.json({ error: 'Failed to upload image' }, { status: 500 })
+        return NextResponse.json({ error: uploadError.message || JSON.stringify(uploadError) || 'Unknown upload error' }, { status: 500 })
       }
 
       const {
