@@ -28,7 +28,6 @@ export default function UploadModal({ albumId }: { albumId: string }) {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('albumId', albumId);
       formData.append('description', description);
 
       const res = await fetch('/api/photos/uploads', {
@@ -37,18 +36,16 @@ export default function UploadModal({ albumId }: { albumId: string }) {
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
-        setError(errorData.error || 'Upload failed');
-        setUploading(false);
-        return;
+        const data = await res.json();
+        throw new Error(data.error || 'Upload failed');
       }
 
       setOpen(false);
       setFile(null);
       setDescription('');
-      router.refresh();
-    } catch (err) {
-      setError('Upload failed: ' + (err as Error).message);
+      router.refresh(); // Refresh the page to show new photo
+    } catch (err: any) {
+      setError(err.message || 'Something went wrong');
     } finally {
       setUploading(false);
     }
@@ -69,9 +66,7 @@ export default function UploadModal({ albumId }: { albumId: string }) {
           type="file"
           accept="image/*"
           onChange={(e) => {
-            if (e.target.files?.[0]) {
-              setFile(e.target.files[0]);
-            }
+            if (e.target.files?.[0]) setFile(e.target.files[0]);
           }}
         />
 
