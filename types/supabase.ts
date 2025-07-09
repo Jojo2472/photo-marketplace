@@ -15,14 +15,14 @@ export interface Database {
           user_id: string;
           name: string;
           description: string | null;
-          created_at: string;
+          created_at: string | null;
         };
         Insert: {
           id?: string;
           user_id: string;
           name: string;
           description?: string | null;
-          created_at?: string;
+          created_at?: string | null;
         };
         Update: {
           name?: string;
@@ -34,18 +34,21 @@ export interface Database {
           id: string;
           album_id: string;
           user_id: string;
-          file_path: string;
-          created_at: string;
+          original_url: string;   // Updated here
+          created_at: string | null;
         };
         Insert: {
           id?: string;
           album_id: string;
           user_id: string;
-          file_path: string;
-          created_at?: string;
+          original_url: string;   // Updated here
+          created_at?: string | null;
         };
         Update: {
-          file_path?: string;
+          album_id?: string;
+          user_id?: string;
+          original_url?: string;   // Updated here
+          created_at?: string | null;
         };
       };
       // Add other tables as needed

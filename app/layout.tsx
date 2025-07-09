@@ -1,18 +1,22 @@
-'use client'
+//app/layout
 
-import './globals.css'
-import { useState } from 'react'
-import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs'
-import { SessionContextProvider } from '@supabase/auth-helpers-react'
-import type { Database } from '@/types/supabase' // make sure path is correct
+'use client';
+
+import './globals.css';
+import { useState } from 'react';
+import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
+import { SessionContextProvider } from '@supabase/auth-helpers-react';
+import type { Database } from '@/types/supabase';
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  // Create Supabase client once per session
-  const [supabaseClient] = useState(() => createPagesBrowserClient<Database>())
+  // Pass your Database type here to ensure type compatibility
+  const [supabaseClient] = useState(() =>
+    createPagesBrowserClient<Database>()
+  );
 
   return (
     <html lang="en">
@@ -22,6 +26,6 @@ export default function RootLayout({
         </SessionContextProvider>
       </body>
     </html>
-  )
+  );
 }
 
