@@ -1,12 +1,14 @@
+//app/dashboard/albums/[albumId]/photos/upload/route.ts
+
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/client'
+import { createClient } from '@/utils/supabase/server'  // Use server import here
 import { v4 as uuid } from 'uuid'
 
-export async function POST(req: NextRequest, { params }: { params: { albumId: string } }) {
-  const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+export async function POST(
+  req: NextRequest,
+  { params }: { params: { albumId: string } }
+) {
+  const supabase = createClient()  // NO arguments here
 
   const { albumId } = params
 
