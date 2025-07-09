@@ -4,6 +4,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { randomUUID } from 'crypto';
+import fs from 'fs';
+import path from 'path';
 
 export async function POST(
   req: NextRequest,
@@ -21,25 +23,27 @@ export async function POST(
   }
 
   const fileExt = file.name.split('.').pop();
-  const filePath = `photos/${randomUUID()}.${fileExt}`;
+  const fileName = `${randomUUID()}.${fileExt}`;
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
 
-  const { data: uploadData, error: uploadError } = await supabase.storage
-    .from('photos')
-    .upload(filePath, file, {
-      cacheControl: '3600',
-      upsert: false,
-    });
-
-  if (uploadError) {
-    console.error('❌ Supabase Upload Error:', uploadError);
-    return NextResponse.json({ error: uploadError.message }, { status: 500 });
+  // ✅ Save to /public/uploads locally
+  const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
   }
 
+  const localFilePath = path.join(uploadsDir, fileName);
+  fs.writeFileSync(localFilePath, buffer);
+
+  const publicUrl = `/uploads/${fileName}`;
+
+  // ✅ Save reference in Supabase DB
   const { data: insertedPhoto, error: dbError } = await supabase
     .from('photos')
     .insert({
       album_id: albumId,
-      original_url: uploadData?.path,
+      original_url: publicUrl,
       description,
     })
     .select()
