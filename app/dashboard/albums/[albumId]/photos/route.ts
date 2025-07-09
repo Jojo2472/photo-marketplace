@@ -1,20 +1,26 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/client'
+// app/dashboard/albums/[albumId]/photos/route.ts
 
-export async function GET(req: NextRequest, { params }: { params: { albumId: string } }) {
-  const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/utils/supabase/server';
 
-  const { albumId } = params
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { albumId: string } }
+) {
+  const supabase = createClient();
+
+  const { albumId } = params;
 
   const { data, error } = await supabase
-    .from('photos')
+    .from('albums')
     .select('*')
-    .eq('album_id', albumId)
-    .order('created_at', { ascending: false })
+    .eq('id', albumId)
+    .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json(data);
 }
+
