@@ -1,4 +1,4 @@
-//utils/supabase/client.ts
+// utils/supabase/client.ts
 
 'use client';
 
@@ -7,13 +7,15 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/supabase';
 
 // Create Supabase client for browser (client-side)
-export const createComponentClient = () => createClientComponentClient<Database>();
+export const createBrowserClient = () => createClientComponentClient<Database>();
 
 // Create Supabase client for server usage (without arguments)
-export const createClient = () => createSupabaseClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+export const createServerClient = () =>
+  createSupabaseClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
 
 
 
