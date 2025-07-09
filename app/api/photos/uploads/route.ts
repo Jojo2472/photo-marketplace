@@ -3,7 +3,7 @@
 // /app/api/photos/uploads/route.ts
 
 import { NextResponse } from 'next/server';
-import formidable, { File } from 'formidable';
+import formidable from 'formidable';
 import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
@@ -13,14 +13,15 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request): Promise<NextResponse> {
   const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+  const blurredDir = path.join(uploadDir, 'blurred');
   const watermarkedDir = path.join(uploadDir, 'watermarked');
 
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-  if (!fs.existsSync(watermarkedDir)) {
-    fs.mkdirSync(watermarkedDir, { recursive: true });
-  }
+  // Create dirs if they don't exist
+  [uploadDir, blurredDir, watermarkedDir].forEach(dir => {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+  });
 
   const form = new formidable.IncomingForm({
     uploadDir,
@@ -30,46 +31,52 @@ export async function POST(req: Request): Promise<NextResponse> {
   return new Promise<NextResponse>((resolve) => {
     form.parse(req as any, async (err, fields, files) => {
       if (err) {
-        console.error('Form parse error:', err);
         resolve(NextResponse.json({ error: 'Upload failed' }, { status: 500 }));
         return;
       }
 
-      // files.file can be array or single File, normalize it
       const file = Array.isArray(files.file) ? files.file[0] : files.file;
-
       if (!file) {
         resolve(NextResponse.json({ error: 'No file uploaded' }, { status: 400 }));
         return;
       }
 
-      const inputFilePath = (file as File).filepath;
+      const inputFilePath = file.filepath;
       const filename = path.basename(inputFilePath);
-      const outputFilePath = path.join(watermarkedDir, filename);
+
+      const blurredPath = path.join(blurredDir, filename);
+      const watermarkedPath = path.join(watermarkedDir, filename);
 
       try {
+        // Generate blurred version
+        await sharp(inputFilePath)
+          .resize(200) // smaller size for blur preview
+          .blur(10)
+          .toFile(blurredPath);
+
+        // Generate watermarked version
         await sharp(inputFilePath)
           .composite([
             {
               input: Buffer.from(
-                `<svg>
-                  <text x="10" y="50" font-size="30" fill="white" stroke="black" stroke-width="1" opacity="0.5">Watermark</text>
+                `<svg width="200" height="200">
+                  <text x="10" y="180" font-size="30" fill="white" stroke="black" stroke-width="1" opacity="0.5">Watermark</text>
                 </svg>`
               ),
               gravity: 'southeast',
             },
           ])
-          .toFile(outputFilePath);
-      } catch (error) {
-        console.error('Watermarking error:', error);
-        resolve(NextResponse.json({ error: 'Watermarking failed' }, { status: 500 }));
+          .toFile(watermarkedPath);
+      } catch (e) {
+        resolve(NextResponse.json({ error: 'Image processing failed' }, { status: 500 }));
         return;
       }
 
       resolve(
         NextResponse.json({
           success: true,
-          uploadedUrl: `/uploads/${filename}`,
+          originalUrl: `/uploads/${filename}`,
+          blurredUrl: `/uploads/blurred/${filename}`,
           watermarkedUrl: `/uploads/watermarked/${filename}`,
           fields,
         })
