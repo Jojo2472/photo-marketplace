@@ -71,3 +71,25 @@ export default function UploadModal({ albumId }: { albumId: string }) {
           onChange={(e) => {
             if (e.target.files?.[0]) setFile(e.target.files[0]);
           }}
+        />
+
+        <textarea
+          placeholder="Optional description"
+          className="w-full border p-2 rounded"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+
+        {error && <p className="text-red-600 text-sm">{error}</p>}
+
+        <button
+          onClick={handleUpload}
+          disabled={uploading}
+          className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded"
+        >
+          {uploading ? 'Uploading...' : 'Upload Photo'}
+        </button>
+      </DialogContent>
+    </Dialog>
+  );
+}
