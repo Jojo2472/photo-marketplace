@@ -1,5 +1,5 @@
+// app/dashboard/albums/[albumId]/albumclient.tsx
 
-// Trigger clean build
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -49,9 +49,9 @@ export default function AlbumDetailPage() {
     setLoading(true);
 
     const formData = new FormData();
-    formData.append('photo', file);
+    formData.append('file', file); // ✅ Correct field name to match backend
 
-    const res = await fetch(`/api/albums/${albumId}/photos/upload`, {
+    const res = await fetch(`/api/albums/${albumId}/photos`, {
       method: 'POST',
       body: formData,
     });
@@ -77,12 +77,14 @@ export default function AlbumDetailPage() {
           {album.cover_url && (
             <div className="relative h-48 w-full sm:w-96">
               <Image
-                src={album.cover_url || "https://jllzzkqlqaoiotluyexb.supabase.co/storage/v1/object/public/album-covers/placeholder-cover.jpg"}
+                src={
+                  album.cover_url ||
+                  'https://jllzzkqlqaoiotluyexb.supabase.co/storage/v1/object/public/album-covers/placeholder-cover.jpg'
+                }
                 alt="Album cover"
                 fill
                 className="object-cover rounded"
               />
-
             </div>
           )}
         </>
@@ -106,7 +108,12 @@ export default function AlbumDetailPage() {
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 pt-6">
         {photos.map((photo) => (
           <div key={photo.id} className="relative w-full aspect-square">
-            <Image src={photo.original_url} alt="photo" fill className="object-cover rounded" />
+            <Image
+              src={photo.original_url}
+              alt="photo"
+              fill
+              className="object-cover rounded"
+            />
           </div>
         ))}
       </div>
