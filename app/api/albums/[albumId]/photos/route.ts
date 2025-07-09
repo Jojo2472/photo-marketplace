@@ -1,8 +1,8 @@
-//app/api/albums/[albumId]/photos/route.ts
-
+// /app/api/albums/[albumId]/photos/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 import { randomUUID } from 'crypto';
 import fs from 'fs';
 import path from 'path';
@@ -11,7 +11,8 @@ export async function POST(
   req: NextRequest,
   { params }: { params: { albumId: string } }
 ) {
-  const supabase = createClient();
+  const supabase = createRouteHandlerClient({ cookies });
+
   const formData = await req.formData();
   const file = formData.get('file') as File;
   const description = formData.get('description') as string;
@@ -27,7 +28,7 @@ export async function POST(
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
-  // ✅ Save to /public/uploads locally
+  // Save to /public/uploads locally
   const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
@@ -38,7 +39,7 @@ export async function POST(
 
   const publicUrl = `/uploads/${fileName}`;
 
-  // ✅ Save reference in Supabase DB
+  // Save reference in Supabase DB
   const { data: insertedPhoto, error: dbError } = await supabase
     .from('photos')
     .insert({
@@ -61,7 +62,7 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { albumId: string } }
 ) {
-  const supabase = createClient();
+  const supabase = createRouteHandlerClient({ cookies });
   const albumId = params.albumId;
 
   const { data, error } = await supabase

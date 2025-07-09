@@ -7,5 +7,3 @@ import { Database } from '@/types/supabase';
 export function createClient() {
   return createServerComponentClient<Database>({ cookies });
 }
-
-
