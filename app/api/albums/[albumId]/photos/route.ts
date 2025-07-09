@@ -33,15 +33,36 @@ export async function POST(
     return NextResponse.json({ error: uploadError.message }, { status: 500 });
   }
 
-  const { error: dbError } = await supabase.from('photos').insert({
+  const { data: insertedPhoto, error: dbError } = await supabase.from('photos').insert({
     album_id: albumId,
     original_url: uploadData?.path,
     description,
-  });
+  }).select().single();
 
   if (dbError) {
     return NextResponse.json({ error: dbError.message }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json(insertedPhoto);
 }
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { albumId: string } }
+) {
+  const supabase = createClient();
+  const albumId = params.albumId;
+
+  const { data, error } = await supabase
+    .from('photos')
+    .select('*')
+    .eq('album_id', albumId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json(data);
+}
+
