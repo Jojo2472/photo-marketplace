@@ -1,17 +1,19 @@
+//utils/supabase/client.ts
+
 'use client';
 
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/supabase';
 
-// Browser (client-side) Supabase client for React components
+// Create Supabase client for browser (client-side)
 export const createComponentClient = () => createClientComponentClient<Database>();
 
-// Server Supabase client (used in API routes, edge functions)
-export const createClient = () =>
-  createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+// Create Supabase client for server usage (without arguments)
+export const createClient = () => createSupabaseClient<Database>(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
 
 
