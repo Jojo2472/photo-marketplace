@@ -16,6 +16,7 @@ export async function POST(
   const albumId = params.albumId;
 
   if (!file || !file.name) {
+    console.error('❌ No file found in form data');
     return NextResponse.json({ error: 'Missing file' }, { status: 400 });
   }
 
@@ -30,16 +31,22 @@ export async function POST(
     });
 
   if (uploadError) {
+    console.error('❌ Supabase Upload Error:', uploadError);
     return NextResponse.json({ error: uploadError.message }, { status: 500 });
   }
 
-  const { data: insertedPhoto, error: dbError } = await supabase.from('photos').insert({
-    album_id: albumId,
-    original_url: uploadData?.path,
-    description,
-  }).select().single();
+  const { data: insertedPhoto, error: dbError } = await supabase
+    .from('photos')
+    .insert({
+      album_id: albumId,
+      original_url: uploadData?.path,
+      description,
+    })
+    .select()
+    .single();
 
   if (dbError) {
+    console.error('❌ Supabase DB Insert Error:', dbError);
     return NextResponse.json({ error: dbError.message }, { status: 500 });
   }
 
@@ -60,9 +67,9 @@ export async function GET(
     .order('created_at', { ascending: false });
 
   if (error) {
+    console.error('❌ Supabase Fetch Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
   return NextResponse.json(data);
 }
-
