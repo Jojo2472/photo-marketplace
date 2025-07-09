@@ -1,25 +1,20 @@
 // app/api/auth/register/route.ts
-import { createClient } from '@/utils/supabase/client';
+
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/utils/supabase/server'; // <- import server client here
 import { sendVerificationEmail } from '@/lib/sendVerificationEmail';
-import { NextRequest } from 'next/server';
 
 export async function POST(req: NextRequest) {
-  try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+  const supabase = createClient(); // no arguments here
 
+  try {
     const { email, password, username, role } = await req.json();
 
     if (!email || !password || !username || !role) {
-      return new Response('Missing fields', { status: 400 });
+      return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
     }
 
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.signUp({
+    const { data: user, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -30,14 +25,14 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       console.error(error);
-      return new Response(error.message, { status: 400 });
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
     await sendVerificationEmail(email, `${process.env.NEXT_PUBLIC_SITE_URL}/verify`);
-    return new Response(JSON.stringify(user), { status: 200 });
+
+    return NextResponse.json(user, { status: 200 });
   } catch (err) {
     console.error('Registration error:', err);
-    return new Response('Internal Server Error', { status: 500 });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
-
