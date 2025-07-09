@@ -1,8 +1,10 @@
+//app/dashboard/albums/[albumId]/api/route.ts
+
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/utils/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 
 export async function GET(req: NextRequest, { params }: { params: { albumId: string } }) {
-  const supabase = createServerClient()
+  const supabase = createClient()
 
   const { albumId } = params
 
@@ -18,3 +20,4 @@ export async function GET(req: NextRequest, { params }: { params: { albumId: str
 
   return NextResponse.json(data)
 }
+
