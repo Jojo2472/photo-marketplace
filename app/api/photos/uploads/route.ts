@@ -1,7 +1,9 @@
 // /app/api/photos/uploads/route.ts
 
+// /app/api/photos/uploads/route.ts
+
 import { NextResponse } from 'next/server';
-import formidable from 'formidable';
+import formidable, { File } from 'formidable';
 import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
@@ -28,17 +30,20 @@ export async function POST(req: Request): Promise<NextResponse> {
   return new Promise<NextResponse>((resolve) => {
     form.parse(req as any, async (err, fields, files) => {
       if (err) {
+        console.error('Form parse error:', err);
         resolve(NextResponse.json({ error: 'Upload failed' }, { status: 500 }));
         return;
       }
 
+      // files.file can be array or single File, normalize it
       const file = Array.isArray(files.file) ? files.file[0] : files.file;
+
       if (!file) {
         resolve(NextResponse.json({ error: 'No file uploaded' }, { status: 400 }));
         return;
       }
 
-      const inputFilePath = file.filepath;
+      const inputFilePath = (file as File).filepath;
       const filename = path.basename(inputFilePath);
       const outputFilePath = path.join(watermarkedDir, filename);
 
@@ -55,7 +60,8 @@ export async function POST(req: Request): Promise<NextResponse> {
             },
           ])
           .toFile(outputFilePath);
-      } catch {
+      } catch (error) {
+        console.error('Watermarking error:', error);
         resolve(NextResponse.json({ error: 'Watermarking failed' }, { status: 500 }));
         return;
       }
