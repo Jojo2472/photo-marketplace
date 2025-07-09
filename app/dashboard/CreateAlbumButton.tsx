@@ -4,11 +4,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createComponentClient } from '@/utils/supabase/client';
+import { createBrowserClient } from '@/utils/supabase/client';
 
 export default function CreateAlbumButton() {
   const router = useRouter();
-  const supabase = createComponentClient();
+  const supabase = createBrowserClient();
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -58,7 +58,7 @@ export default function CreateAlbumButton() {
         name,
         description,
         cover_url,
-        user_id: user.id
+        user_id: user.id,
       })
       .select()
       .single();
