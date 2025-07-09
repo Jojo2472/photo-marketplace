@@ -26,6 +26,8 @@ export default function UploadModal({ albumId }: { albumId: string }) {
     }
 
     try {
+      console.log('Uploading file:', file);
+
       const formData = new FormData();
       formData.append('file', file);
       formData.append('description', description);
@@ -37,6 +39,7 @@ export default function UploadModal({ albumId }: { albumId: string }) {
 
       if (!res.ok) {
         const data = await res.json();
+        console.error('Upload error:', data);
         throw new Error(data.error || 'Upload failed');
       }
 
