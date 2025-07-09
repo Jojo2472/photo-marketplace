@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/client'
+import { createServerClient } from '@/utils/supabase/server'
 
 export async function GET(req: NextRequest, { params }: { params: { albumId: string } }) {
-  const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+  const supabase = createServerClient()
 
   const { albumId } = params
 
@@ -15,6 +12,9 @@ export async function GET(req: NextRequest, { params }: { params: { albumId: str
     .eq('id', albumId)
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
   return NextResponse.json(data)
 }
