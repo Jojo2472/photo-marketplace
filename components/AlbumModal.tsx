@@ -2,15 +2,11 @@
 
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import { createComponentClient } from '@/utils/supabase/client';
+import { createBrowserClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 
-export default function AlbumModal({
-  onAlbumCreated,
-}: {
-  onAlbumCreated?: () => void;
-}) {
-  const supabase = createComponentClient();
+export default function AlbumModal({ onAlbumCreated }: { onAlbumCreated?: () => void }) {
+  const supabase = createBrowserClient();
   const router = useRouter();
 
   const [open, setOpen] = useState(false);
@@ -35,10 +31,7 @@ export default function AlbumModal({
 
     if (coverFile) {
       const filePath = `covers/${user.id}/${Date.now()}-${coverFile.name}`;
-      const { error: uploadError } = await supabase
-        .storage
-        .from('album-covers')
-        .upload(filePath, coverFile);
+      const { error: uploadError } = await supabase.storage.from('album-covers').upload(filePath, coverFile);
 
       if (uploadError) {
         setError('Cover upload failed: ' + uploadError.message);
@@ -46,11 +39,7 @@ export default function AlbumModal({
         return;
       }
 
-      const { data: urlData } = supabase
-        .storage
-        .from('album-covers')
-        .getPublicUrl(filePath);
-
+      const { data: urlData } = supabase.storage.from('album-covers').getPublicUrl(filePath);
       cover_url = urlData?.publicUrl ?? null;
     }
 
@@ -60,7 +49,7 @@ export default function AlbumModal({
         name,
         description,
         cover_url,
-        user_id: user.id
+        user_id: user.id,
       })
       .select()
       .single();
@@ -72,7 +61,6 @@ export default function AlbumModal({
     }
 
     if (onAlbumCreated) onAlbumCreated();
-
     setOpen(false);
     router.push(`/dashboard/albums/${data.id}?upload=1`);
   };

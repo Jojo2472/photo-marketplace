@@ -2,9 +2,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createComponentClient } from '@/utils/supabase/client';
+import { createBrowserClient } from '@/utils/supabase/client';
 import Link from 'next/link';
-import AlbumModal from '@/components/AlbumModal'; // No named import
+import AlbumModal from '@/components/AlbumModal';
 
 export type Album = {
   id: string;
@@ -16,8 +16,8 @@ export type Album = {
 export default function DashboardPage() {
   const [albums, setAlbums] = useState<Album[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refresh, setRefresh] = useState(false); // used to trigger refetch
-  const supabase = createComponentClient();
+  const [refresh, setRefresh] = useState(false); // to trigger refetch
+  const supabase = createBrowserClient();
 
   useEffect(() => {
     async function fetchAlbums() {
@@ -43,7 +43,7 @@ export default function DashboardPage() {
     }
 
     fetchAlbums();
-  }, [refresh]); // refetch whenever refresh state toggles
+  }, [refresh]);
 
   const handleAlbumCreated = () => {
     setRefresh((prev) => !prev);
