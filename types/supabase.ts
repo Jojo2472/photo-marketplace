@@ -1,5 +1,3 @@
-import { PostgrestVersion } from '@supabase/postgrest-js'
-
 export type Json =
   | string
   | number
@@ -8,7 +6,7 @@ export type Json =
   | { [key: string]: Json }
   | Json[];
 
-export interface Database extends PostgrestVersion {
+export interface Database {
   public: {
     Tables: {
       albums: {
@@ -36,8 +34,8 @@ export interface Database extends PostgrestVersion {
           id: string;
           album_id: string;
           user_id: string;
-          original_url: string;  // updated from file_path
-          blurred_url?: string | null; // if you use this field
+          original_url: string;
+          blurred_url?: string | null;
           created_at: string;
         };
         Insert: {
@@ -53,7 +51,6 @@ export interface Database extends PostgrestVersion {
           blurred_url?: string | null;
         };
       };
-      // Add other tables as needed
     };
     Views: {};
     Functions: {};
